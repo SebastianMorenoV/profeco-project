@@ -1,0 +1,43 @@
+/backend/profeco-backend/common-grpc/target/
+# ==========================================
+# 1. Archivos compilados de Maven (Lo más importante)
+# ==========================================
+# El asterisco doble (**) hace que ignore la carpeta target 
+# de CADA microservicio y enrutador, no solo la raíz.
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.log
+
+# ==========================================
+# 2. Archivos específicos de NetBeans
+# ==========================================
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+nbactions.xml
+nb-configuration.xml
+
+# ==========================================
+# 3. Otros IDEs (Por si alguien de tu equipo usa IntelliJ o VSCode)
+# ==========================================
+.idea/
+*.iml
+.vscode/
+
+# ==========================================
+# 4. Archivos del Sistema Operativo
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# 5. Variables de entorno locales (Seguridad futura)
+# ==========================================
+.env
