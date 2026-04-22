@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.mycompany.grpc.multas";
+option java_outer_classname = "MultasProto";
+
+package ecommerce.multas.v1;
+
+service MultasService {
+  // Solo nos importa que este cable funcione para el avance
+  rpc Ping(Empty) returns (PingResponse);
+}
+
+message Empty {}
+
+message PingResponse {
+  string mensaje = 1;
+}

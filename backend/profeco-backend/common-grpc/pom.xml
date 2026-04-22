@@ -7,9 +7,13 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>common-grpc</artifactId>
-    <packaging>jar</packaging>
-    <properties>
-        <maven.compiler.release>25</maven.compiler.release>
-        <exec.mainClass>com.mycompany.common.grpc.CommonGrpc</exec.mainClass>
-    </properties>
+    <packaging>pom</packaging>
+    <modules>
+        <module>grpc-catalogo</module>
+        <module>grpc-comercio</module>
+        <module>grpc-multas</module>
+        <module>grpc-ofertas</module>
+        <module>grpc-resenias</module>
+        <module>grpc-usuarios</module>
+    </modules>
 </project>

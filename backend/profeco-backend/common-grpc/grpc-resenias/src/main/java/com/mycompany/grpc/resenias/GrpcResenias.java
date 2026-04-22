@@ -2,13 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
 
-package com.mycompany.common.grpc;
+package com.mycompany.grpc.resenias;
 
 /**
- * Aqui es donde iran todos los archivos proto para generar las clases gRPC
- * @author Sebastian Moreno
+ *
+ * @author skzyy
  */
-public class CommonGrpc {
+public class GrpcResenias {
 
     public static void main(String[] args) {
         System.out.println("Hello World!");

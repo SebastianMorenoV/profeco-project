@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+// Estas opciones le dicen al plugin cómo generar las clases en Java
+option java_multiple_files = true;
+option java_package = "com.mycompany.grpc.catalogo";
+option java_outer_classname = "CatalogoProto";
+
+package ecommerce.catalogo.v1;
+
+// --- EL SERVICIO ---
+service CatalogoService {
+  // Tarea 1.3: El método para validar que el cable funciona
+  rpc Ping(Empty) returns (PingResponse);
+  
+  // Tarea 1.4: El método real para la Prueba de Concepto (Flujo Síncrono)
+  rpc BuscarProductos(BuscarRequest) returns (ListaProductosResponse);
+}
+
+// --- LOS MENSAJES (DTOs) ---
+
+// Mensajes genéricos para el Ping/Pong
+message Empty {}
+
+message PingResponse {
+  string mensaje = 1;
+}
+
+// Mensajes para el caso de uso real
+message BuscarRequest {
+  string query = 1; // Ej. "leche", "huevo"
+}
+
+message Producto {
+  string id = 1;
+  string nombre = 2;
+  double precio = 3;
+  string supermercado = 4; // Para saber quién lo vende
+}
+
+message ListaProductosResponse {
+  repeated Producto productos = 1; // "repeated" significa que es una lista/array
+}

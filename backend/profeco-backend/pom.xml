@@ -6,7 +6,6 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>common-grpc</module>
         <module>microservices/ms-catalogo</module>
         <module>microservices/ms-comercio</module>
         <module>microservices/ms-multas</module>
@@ -17,6 +16,7 @@
         <module>api-gateways/gateway-consumidor</module>
         <module>api-gateways/gateway-consumidor-movil</module>
         <module>api-gateways/gateway-profeco</module>
+        <module>common-grpc</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
