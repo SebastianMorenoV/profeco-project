@@ -53,6 +53,12 @@ static_resources:
                         # Si el paquete es de ofertas, mándalo al cluster ms-ofertas
                         - match: { prefix: "/profeco.ofertas.v1.OfertasService/" }
                           route: { cluster: ms-ofertas }
+                        # Si el paquete es de resenias, mándalo al cluster ms-resenias
+                        - match: { prefix: "/profeco.resenias.v1.ReseniasService/" }
+                          route: { cluster: ms-resenias }
+                        # Si el paquete es de usuarios, mándalo al cluster ms-usuarios
+                        - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
+                          route: { cluster: ms-usuarios }
 
                 # ---------------------------------------------------------
                 # 3. HTTP FILTERS (Filtros HTTP)
@@ -74,6 +80,8 @@ static_resources:
                         - "profeco.comercio.v1.ComercioService"
                         - "profeco.catalogo.v1.CatalogoService"
                         - "profeco.ofertas.v1.OfertasService"
+                        - "profeco.resenias.v1.ReseniasService"
+                        - "profeco.usuarios.v1.UsuariosService"
                       print_options: { add_whitespace: true }
                       auto_mapping: true
                   
@@ -108,3 +116,18 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9095 } } } }] }] }
+    
+    # Cluster del MS Reseñas (corre en el puerto 9094)
+    - name: ms-resenias
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-resenias, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9094 } } } }] }] }
+
+    # Cluster del MS Usuarios (corre en el puerto 9096)
+    - name: ms-usuarios
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9096 } } } }] }] }
+

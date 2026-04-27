@@ -22,8 +22,6 @@ static_resources:
                       routes:
                         - match: { prefix: "/profeco.multas.v1.MultasService/" }
                           route: { cluster: ms-multas }
-                        - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
-                          route: { cluster: ms-usuarios }
                 http_filters:
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
@@ -33,7 +31,6 @@ static_resources:
                       proto_descriptor: "/etc/envoy/proto/gateway-profeco.pb"
                       services:
                         - "profeco.multas.v1.MultasService"
-                        - "profeco.usuarios.v1.UsuariosService"
                       print_options: { add_whitespace: true }
                       auto_mapping: true
                   - name: envoy.filters.http.router
@@ -45,8 +42,3 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9097 } } } }] }] }
-    - name: ms-usuarios
-      type: STRICT_DNS
-      dns_lookup_family: V4_ONLY
-      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
-      load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9096 } } } }] }] }
