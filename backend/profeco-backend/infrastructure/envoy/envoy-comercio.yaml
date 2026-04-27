@@ -1,0 +1,118 @@
+# ==========================================
+# CONFIGURACIÓN DE ENVOY PARA: GATEWAY COMERCIO
+# ==========================================
+# Este archivo define cómo Envoy va a recibir peticiones web (HTTP/JSON)
+# y las va a traducir y enrutar a los microservicios Java (gRPC).
+
+static_resources:
+  # ---------------------------------------------------------
+  # 1. LISTENERS (Escuchadores)
+  # Definen en qué puerto se va a quedar Envoy escuchando peticiones.
+  # ---------------------------------------------------------
+  listeners:
+    - name: listener_comercio
+      address:
+        # Aquí le decimos a Envoy que escuche en el puerto 8082 en todas las interfaces de red (0.0.0.0).
+        socket_address: { address: 0.0.0.0, port_value: 8082 }
+      filter_chains:
+        - filters:
+            # Este es el filtro principal de Envoy que sabe cómo manejar tráfico HTTP
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                codec_type: AUTO
+                
+                # ---------------------------------------------------------
+                # 2. ROUTE CONFIG (Configuración de Rutas)
+                # Define a qué cluster (microservicio) enviar cada petición.
+                # ---------------------------------------------------------
+                route_config:
+                  name: local_routes
+                  virtual_hosts:
+                    - name: backend
+                      domains: ["*"] # Acepta peticiones de cualquier dominio
+                      
+                      # CORS: Permite que un frontend web (Angular, React, etc.) llame a esta API
+                      # sin que el navegador bloquee la petición por seguridad.
+                      cors:
+                        allow_origin_string_match: [{ prefix: "http://localhost" }]
+                        allow_methods: "GET, POST, PUT, DELETE, OPTIONS"
+                        allow_headers: "Content-Type, Authorization"
+                      
+                      # RUTAS: Aquí Envoy lee la ruta y decide a dónde mandarla.
+                      # OJO: Como el transcodificador traduce todo antes de llegar aquí,
+                      # estas rutas buscan el "nombre del paquete gRPC" en lugar de la URL original (/api/...).
+                      routes:
+                        # Si el paquete es de comercio, mándalo al cluster ms-comercio
+                        - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
+                          route: { cluster: ms-comercio }
+                        # Si el paquete es de catalogo, mándalo al cluster ms-catalogo
+                        - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
+                          route: { cluster: ms-catalogo }
+                        # Si el paquete es de ofertas, mándalo al cluster ms-ofertas
+                        - match: { prefix: "/profeco.ofertas.v1.OfertasService/" }
+                          route: { cluster: ms-ofertas }
+
+                # ---------------------------------------------------------
+                # 3. HTTP FILTERS (Filtros HTTP)
+                # Aquí ocurre la verdadera magia de Envoy (El transcodificador).
+                # ---------------------------------------------------------
+                http_filters:
+                  # Filtro para procesar CORS
+                  - name: envoy.filters.http.cors
+                    typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
+                  
+                  # TRANSCODIFICADOR 1: Para el microservicio de Comercio
+                  # Traduce de HTTP (REST) a gRPC usando el archivo .pb generado por Maven
+                  - name: envoy.filters.http.grpc_json_transcoder
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
+                      proto_descriptor: "/etc/envoy/proto/grpc-comercio.pb"
+                      services: ["profeco.comercio.v1.ComercioService"] # El servicio específico que sabe traducir
+                      print_options: { add_whitespace: true }
+                  
+                  # TRANSCODIFICADOR 2: Para el microservicio de Catálogo
+                  - name: envoy.filters.http.grpc_json_transcoder
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
+                      proto_descriptor: "/etc/envoy/proto/grpc-catalogo.pb"
+                      services: ["profeco.catalogo.v1.CatalogoService"]
+                      print_options: { add_whitespace: true }
+                  
+                  # TRANSCODIFICADOR 3: Para el microservicio de Ofertas
+                  - name: envoy.filters.http.grpc_json_transcoder
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
+                      proto_descriptor: "/etc/envoy/proto/grpc-ofertas.pb"
+                      services: ["profeco.ofertas.v1.OfertasService"]
+                      print_options: { add_whitespace: true }
+                  
+                  # El enrutador final que despacha la petición al cluster elegido en el paso 2
+                  - name: envoy.filters.http.router
+                    typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
+
+  # ---------------------------------------------------------
+  # 4. CLUSTERS (Destinos Backend)
+  # Definen la IP y Puerto de tus microservicios Java reales.
+  # ---------------------------------------------------------
+  clusters:
+    # Cluster del MS Comercio (corre en el puerto 9092)
+    - name: ms-comercio
+      type: STRICT_DNS
+      # Forzamos a Envoy a comunicarse con el Java usando HTTP/2 (requerido por gRPC)
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      # host.docker.internal es la forma en que el contenedor Docker accede a "localhost" de tu Windows
+      load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9092 } } } }] }] }
+    
+    # Cluster del MS Catálogo (corre en el puerto 9091)
+    - name: ms-catalogo
+      type: STRICT_DNS
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9091 } } } }] }] }
+    
+    # Cluster del MS Ofertas (corre en el puerto 9095)
+    - name: ms-ofertas
+      type: STRICT_DNS
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9095 } } } }] }] }

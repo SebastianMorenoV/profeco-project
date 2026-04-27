@@ -1,19 +1,29 @@
 syntax = "proto3";
 
+import "google/api/annotations.proto";
+
 // Estas opciones le dicen al plugin cómo generar las clases en Java
 option java_multiple_files = true;
 option java_package = "com.mycompany.grpc.catalogo";
 option java_outer_classname = "CatalogoProto";
 
-package ecommerce.catalogo.v1;
+package profeco.catalogo.v1;
 
 // --- EL SERVICIO ---
 service CatalogoService {
   // Tarea 1.3: El método para validar que el cable funciona
-  rpc Ping(Empty) returns (PingResponse);
+  rpc Ping(Empty) returns (PingResponse) {
+    option (google.api.http) = {
+      get: "/api/catalogo/ping"
+    };
+  }
   
   // Tarea 1.4: El método real para la Prueba de Concepto (Flujo Síncrono)
-  rpc BuscarProductos(BuscarRequest) returns (ListaProductosResponse);
+  rpc BuscarProductos(BuscarRequest) returns (ListaProductosResponse) {
+    option (google.api.http) = {
+      get: "/api/catalogo/productos"
+    };
+  }
 }
 
 // --- LOS MENSAJES (DTOs) ---

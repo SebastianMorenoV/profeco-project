@@ -12,13 +12,7 @@
         <module>microservices/ms-ofertas</module>
         <module>microservices/ms-resenias</module>
         <module>microservices/ms-usuarios</module>
-        <module>api-gateways/gateway-comercio</module>
-        <module>api-gateways/gateway-consumidor</module>
-        <module>api-gateways/gateway-consumidor-movil</module>
-        <module>api-gateways/gateway-profeco</module>
         <module>common-grpc</module>
-        <module>microservices/notificaciones</module>
-        <module>infrastructure/notificaciones</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

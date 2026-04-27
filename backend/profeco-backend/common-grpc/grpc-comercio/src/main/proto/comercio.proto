@@ -1,13 +1,19 @@
 syntax = "proto3";
 
+import "google/api/annotations.proto";
+
 option java_multiple_files = true;
 option java_package = "com.mycompany.grpc.comercio";
 option java_outer_classname = "ComercioProto";
 
-package ecommerce.comercio.v1;
+package profeco.comercio.v1;
 
 service ComercioService {
-  rpc Ping(Empty) returns (PingResponse);
+  rpc Ping(Empty) returns (PingResponse) {
+    option (google.api.http) = {
+      get: "/api/comercio/ping"
+    };
+  }
 }
 
 message Empty {}
