@@ -30,24 +30,23 @@ static_resources:
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-catalogo.pb"
-                      services: ["profeco.catalogo.v1.CatalogoService"]
+                      proto_descriptor: "/etc/envoy/proto/gateway-consumidor.pb"
+                      services:
+                        - "profeco.catalogo.v1.CatalogoService"
+                        - "profeco.resenias.v1.ReseniasService"
                       print_options: { add_whitespace: true }
-                  - name: envoy.filters.http.grpc_json_transcoder
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-resenias.pb"
-                      services: ["profeco.resenias.v1.ReseniasService"]
-                      print_options: { add_whitespace: true }
+                      auto_mapping: true
                   - name: envoy.filters.http.router
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
 
   clusters:
     - name: ms-catalogo
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9091 } } } }] }] }
     - name: ms-resenias
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-resenias, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9094 } } } }] }] }

@@ -13,6 +13,7 @@
         <module>microservices/ms-resenias</module>
         <module>microservices/ms-usuarios</module>
         <module>common-grpc</module>
+        <module>infrastructure/envoy</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

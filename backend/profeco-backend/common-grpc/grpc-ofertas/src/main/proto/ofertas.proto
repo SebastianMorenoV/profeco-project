@@ -12,6 +12,10 @@ service OfertasService {
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/ofertas/ping"
+      additional_bindings {
+        post: "/profeco.ofertas.v1.OfertasService/Ping"
+        body: "*"
+      }
     };
   }
 }

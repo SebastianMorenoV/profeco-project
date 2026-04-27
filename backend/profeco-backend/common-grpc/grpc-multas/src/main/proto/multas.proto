@@ -13,6 +13,10 @@ service MultasService {
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/multas/ping"
+      additional_bindings {
+        post: "/profeco.multas.v1.MultasService/Ping"
+        body: "*"
+      }
     };
   }
 }

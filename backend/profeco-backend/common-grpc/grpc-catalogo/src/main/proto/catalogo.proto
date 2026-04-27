@@ -15,13 +15,21 @@ service CatalogoService {
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/catalogo/ping"
+      additional_bindings {
+        post: "/profeco.catalogo.v1.CatalogoService/Ping"
+        body: "*"
+      }
     };
   }
-  
+
   // Tarea 1.4: El método real para la Prueba de Concepto (Flujo Síncrono)
   rpc BuscarProductos(BuscarRequest) returns (ListaProductosResponse) {
     option (google.api.http) = {
       get: "/api/catalogo/productos"
+      additional_bindings {
+        post: "/profeco.catalogo.v1.CatalogoService/BuscarProductos"
+        body: "*"
+      }
     };
   }
 }

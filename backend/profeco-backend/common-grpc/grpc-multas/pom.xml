@@ -54,6 +54,11 @@
                     <pluginId>grpc-java</pluginId>
                     <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
                     <temporaryProtoFileDirectory>${java.io.tmpdir}/protoc-${project.artifactId}</temporaryProtoFileDirectory>
+                    <writeDescriptorSet>true</writeDescriptorSet>
+                    <descriptorSetOutputDirectory>${project.build.directory}/proto-descriptors</descriptorSetOutputDirectory>
+                    <descriptorSetFileName>${project.artifactId}.pb</descriptorSetFileName>
+                    <includeDependenciesInDescriptorSet>true</includeDependenciesInDescriptorSet>
+                    <includeSourceInfoInDescriptorSet>true</includeSourceInfoInDescriptorSet>
                 </configuration>
                 <executions>
                     <execution>
@@ -61,6 +66,25 @@
                             <goal>compile</goal>
                             <goal>compile-custom</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-pb-to-envoy</id>
+                        <phase>process-classes</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <copy file="${project.build.directory}/proto-descriptors/${project.artifactId}.pb"
+                                      todir="${project.basedir}/../../infrastructure/envoy/proto"
+                                      overwrite="true"/>
+                            </target>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

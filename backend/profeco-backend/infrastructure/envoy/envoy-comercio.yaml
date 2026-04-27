@@ -63,30 +63,19 @@ static_resources:
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
                   
-                  # TRANSCODIFICADOR 1: Para el microservicio de Comercio
-                  # Traduce de HTTP (REST) a gRPC usando el archivo .pb generado por Maven
+                  # TRANSCODIFICADOR único: maneja Comercio, Catálogo y Ofertas
+                  # Usa un .pb combinado porque encadenar varios grpc_json_transcoder
+                  # interfiere entre ellos cuando uno transcodifica.
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-comercio.pb"
-                      services: ["profeco.comercio.v1.ComercioService"] # El servicio específico que sabe traducir
+                      proto_descriptor: "/etc/envoy/proto/gateway-comercio.pb"
+                      services:
+                        - "profeco.comercio.v1.ComercioService"
+                        - "profeco.catalogo.v1.CatalogoService"
+                        - "profeco.ofertas.v1.OfertasService"
                       print_options: { add_whitespace: true }
-                  
-                  # TRANSCODIFICADOR 2: Para el microservicio de Catálogo
-                  - name: envoy.filters.http.grpc_json_transcoder
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-catalogo.pb"
-                      services: ["profeco.catalogo.v1.CatalogoService"]
-                      print_options: { add_whitespace: true }
-                  
-                  # TRANSCODIFICADOR 3: Para el microservicio de Ofertas
-                  - name: envoy.filters.http.grpc_json_transcoder
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-ofertas.pb"
-                      services: ["profeco.ofertas.v1.OfertasService"]
-                      print_options: { add_whitespace: true }
+                      auto_mapping: true
                   
                   # El enrutador final que despacha la petición al cluster elegido en el paso 2
                   - name: envoy.filters.http.router
@@ -100,6 +89,7 @@ static_resources:
     # Cluster del MS Comercio (corre en el puerto 9092)
     - name: ms-comercio
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       # Forzamos a Envoy a comunicarse con el Java usando HTTP/2 (requerido por gRPC)
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       # host.docker.internal es la forma en que el contenedor Docker accede a "localhost" de tu Windows
@@ -108,11 +98,13 @@ static_resources:
     # Cluster del MS Catálogo (corre en el puerto 9091)
     - name: ms-catalogo
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9091 } } } }] }] }
     
     # Cluster del MS Ofertas (corre en el puerto 9095)
     - name: ms-ofertas
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9095 } } } }] }] }

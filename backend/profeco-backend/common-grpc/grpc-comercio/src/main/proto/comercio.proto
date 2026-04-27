@@ -12,6 +12,10 @@ service ComercioService {
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/comercio/ping"
+      additional_bindings {
+        post: "/profeco.comercio.v1.ComercioService/Ping"
+        body: "*"
+      }
     };
   }
 }

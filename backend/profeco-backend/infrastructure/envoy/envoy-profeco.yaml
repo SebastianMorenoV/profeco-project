@@ -30,24 +30,23 @@ static_resources:
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-multas.pb"
-                      services: ["profeco.multas.v1.MultasService"]
+                      proto_descriptor: "/etc/envoy/proto/gateway-profeco.pb"
+                      services:
+                        - "profeco.multas.v1.MultasService"
+                        - "profeco.usuarios.v1.UsuariosService"
                       print_options: { add_whitespace: true }
-                  - name: envoy.filters.http.grpc_json_transcoder
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/grpc-usuarios.pb"
-                      services: ["profeco.usuarios.v1.UsuariosService"]
-                      print_options: { add_whitespace: true }
+                      auto_mapping: true
                   - name: envoy.filters.http.router
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
 
   clusters:
     - name: ms-multas
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9097 } } } }] }] }
     - name: ms-usuarios
       type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9096 } } } }] }] }

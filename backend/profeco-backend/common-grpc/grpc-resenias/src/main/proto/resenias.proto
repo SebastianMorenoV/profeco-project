@@ -12,6 +12,10 @@ service ReseniasService {
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/resenias/ping"
+      additional_bindings {
+        post: "/profeco.resenias.v1.ReseniasService/Ping"
+        body: "*"
+      }
     };
   }
 }
