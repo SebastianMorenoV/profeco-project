@@ -18,10 +18,29 @@ service OfertasService {
       }
     };
   }
+
+  rpc PublicarOferta(PublicarOfertaRequest) returns (PublicarOfertaResponse) {
+    option (google.api.http) = {
+      post: "/api/ofertas/publicar"
+      body: "*"
+    };
+  }
 }
 
 message Empty {}
 
 message PingResponse {
+  string mensaje = 1;
+}
+
+message PublicarOfertaRequest {
+  string titulo = 1;
+  string descripcion = 2;
+  double precio_original = 3;
+  double precio_oferta = 4;
+  double porcentaje_descuento = 5;
+}
+
+message PublicarOfertaResponse {
   string mensaje = 1;
 }
