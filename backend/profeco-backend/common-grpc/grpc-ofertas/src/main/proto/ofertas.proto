@@ -8,39 +8,119 @@ option java_outer_classname = "OfertasProto";
 
 package profeco.ofertas.v1;
 
+// =============================================
+// SERVICIO DE OFERTAS
+// Incluye publicación con evento a RabbitMQ
+// =============================================
 service OfertasService {
+
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/ofertas/ping"
-      additional_bindings {
-        post: "/profeco.ofertas.v1.OfertasService/Ping"
-        body: "*"
-      }
     };
   }
 
-  rpc PublicarOferta(PublicarOfertaRequest) returns (PublicarOfertaResponse) {
+  rpc PublicarOferta(PublicarOfertaRequest) returns (OfertaResponse) {
     option (google.api.http) = {
-      post: "/api/ofertas/publicar"
+      post: "/api/ofertas"
       body: "*"
+    };
+  }
+
+  rpc ObtenerOferta(IdRequest) returns (OfertaResponse) {
+    option (google.api.http) = {
+      get: "/api/ofertas/{id}"
+    };
+  }
+
+  rpc ListarOfertas(ListarOfertasRequest) returns (ListaOfertasResponse) {
+    option (google.api.http) = {
+      get: "/api/ofertas"
+    };
+  }
+
+  rpc ActualizarOferta(ActualizarOfertaRequest) returns (OfertaResponse) {
+    option (google.api.http) = {
+      put: "/api/ofertas/{id}"
+      body: "*"
+    };
+  }
+
+  rpc EliminarOferta(IdRequest) returns (MensajeResponse) {
+    option (google.api.http) = {
+      delete: "/api/ofertas/{id}"
+    };
+  }
+
+  rpc ListarOfertasPorComercio(IdRequest) returns (ListaOfertasResponse) {
+    option (google.api.http) = {
+      get: "/api/ofertas/comercio/{id}"
     };
   }
 }
 
+// =============================================
+// MENSAJES
+// =============================================
 message Empty {}
 
 message PingResponse {
   string mensaje = 1;
 }
 
-message PublicarOfertaRequest {
-  string titulo = 1;
-  string descripcion = 2;
-  double precio_original = 3;
-  double precio_oferta = 4;
-  double porcentaje_descuento = 5;
+message MensajeResponse {
+  string mensaje = 1;
+  bool exito = 2;
 }
 
-message PublicarOfertaResponse {
-  string mensaje = 1;
+message IdRequest {
+  int64 id = 1;
+}
+
+message PublicarOfertaRequest {
+  int64 comercio_id = 1;
+  string titulo = 2;
+  string descripcion = 3;
+  double precio_original = 4;
+  double precio_oferta = 5;
+  double porcentaje_descuento = 6;
+  string fecha_inicio = 7; // formato: YYYY-MM-DD
+  string fecha_fin = 8;
+}
+
+message ActualizarOfertaRequest {
+  int64 id = 1;
+  string titulo = 2;
+  string descripcion = 3;
+  double precio_original = 4;
+  double precio_oferta = 5;
+  double porcentaje_descuento = 6;
+  string fecha_inicio = 7;
+  string fecha_fin = 8;
+}
+
+message ListarOfertasRequest {
+  bool solo_activas = 1; // filtro
+}
+
+message Oferta {
+  int64 id = 1;
+  int64 comercio_id = 2;
+  string titulo = 3;
+  string descripcion = 4;
+  double precio_original = 5;
+  double precio_oferta = 6;
+  double porcentaje_descuento = 7;
+  string fecha_inicio = 8;
+  string fecha_fin = 9;
+  bool activa = 10;
+  string fecha_creacion = 11;
+}
+
+message OfertaResponse {
+  Oferta oferta = 1;
+}
+
+message ListaOfertasResponse {
+  repeated Oferta ofertas = 1;
 }

@@ -8,21 +8,182 @@ option java_outer_classname = "MultasProto";
 
 package profeco.multas.v1;
 
+// =============================================
+// SERVICIO DE MULTAS Y REPORTES
+// - Consumidores crean REPORTES contra comercios
+// - Agentes PROFECO revisan reportes y emiten MULTAS
+// =============================================
 service MultasService {
-  // Solo nos importa que este cable funcione para el avance
+
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/multas/ping"
-      additional_bindings {
-        post: "/profeco.multas.v1.MultasService/Ping"
-        body: "*"
-      }
+    };
+  }
+
+  // ========== REPORTES (Consumidores) ==========
+
+  rpc CrearReporte(CrearReporteRequest) returns (ReporteResponse) {
+    option (google.api.http) = {
+      post: "/api/reportes"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerReporte(IdRequest) returns (ReporteResponse) {
+    option (google.api.http) = {
+      get: "/api/reportes/{id}"
+    };
+  }
+
+  rpc ListarReportesPorUsuario(IdRequest) returns (ListaReportesResponse) {
+    option (google.api.http) = {
+      get: "/api/reportes/usuario/{id}"
+    };
+  }
+
+  rpc ListarReportes(ListarReportesRequest) returns (ListaReportesResponse) {
+    option (google.api.http) = {
+      get: "/api/reportes"
+    };
+  }
+
+  rpc ActualizarEstatusReporte(ActualizarEstatusReporteRequest) returns (ReporteResponse) {
+    option (google.api.http) = {
+      put: "/api/reportes/{id}/estatus"
+      body: "*"
+    };
+  }
+
+  // ========== MULTAS (Solo PROFECO) ==========
+
+  rpc EmitirMulta(EmitirMultaRequest) returns (MultaResponse) {
+    option (google.api.http) = {
+      post: "/api/multas"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerMulta(IdRequest) returns (MultaResponse) {
+    option (google.api.http) = {
+      get: "/api/multas/{id}"
+    };
+  }
+
+  rpc ListarMultas(ListarMultasRequest) returns (ListaMultasResponse) {
+    option (google.api.http) = {
+      get: "/api/multas"
+    };
+  }
+
+  rpc ActualizarEstatus(ActualizarEstatusRequest) returns (MultaResponse) {
+    option (google.api.http) = {
+      put: "/api/multas/{id}/estatus"
+      body: "*"
+    };
+  }
+
+  rpc ListarPorComercio(IdRequest) returns (ListaMultasResponse) {
+    option (google.api.http) = {
+      get: "/api/multas/comercio/{id}"
     };
   }
 }
 
+// =============================================
+// MENSAJES COMUNES
+// =============================================
 message Empty {}
 
 message PingResponse {
   string mensaje = 1;
+}
+
+message MensajeResponse {
+  string mensaje = 1;
+  bool exito = 2;
+}
+
+message IdRequest {
+  int64 id = 1;
+}
+
+// =============================================
+// MENSAJES DE REPORTES
+// =============================================
+message CrearReporteRequest {
+  int64 usuario_id = 1;
+  int64 comercio_id = 2;
+  string motivo = 3; // PRECIO_EXCESIVO, PRODUCTO_ADULTERADO, PUBLICIDAD_ENGANOSA, NEGACION_SERVICIO, INCUMPLIMIENTO_OFERTA, OTRO
+  string descripcion = 4;
+}
+
+message ListarReportesRequest {
+  string estatus = 1; // filtro opcional: PENDIENTE, EN_REVISION, RESUELTA_CON_MULTA, RESUELTA_SIN_MULTA, RECHAZADA
+}
+
+message ActualizarEstatusReporteRequest {
+  int64 id = 1;
+  string estatus = 2;
+}
+
+message Reporte {
+  int64 id = 1;
+  int64 usuario_id = 2;
+  int64 comercio_id = 3;
+  string motivo = 4;
+  string descripcion = 5;
+  string estatus = 6;
+  string fecha_creacion = 7;
+  int64 multa_id = 8; // 0 si no se generó multa
+}
+
+message ReporteResponse {
+  Reporte reporte = 1;
+}
+
+message ListaReportesResponse {
+  repeated Reporte reportes = 1;
+}
+
+// =============================================
+// MENSAJES DE MULTAS
+// =============================================
+message EmitirMultaRequest {
+  int64 comercio_id = 1;
+  string motivo = 2;
+  string descripcion = 3;
+  double monto = 4;
+  int64 emitido_por_usuario_id = 5;
+  int64 reporte_id = 6; // opcional: vincula la multa al reporte que la originó
+}
+
+message ActualizarEstatusRequest {
+  int64 id = 1;
+  string estatus = 2; // PENDIENTE, PAGADA, APELACION, CANCELADA
+}
+
+message ListarMultasRequest {
+  string estatus = 1; // filtro opcional
+}
+
+message Multa {
+  int64 id = 1;
+  int64 comercio_id = 2;
+  string motivo = 3;
+  string descripcion = 4;
+  double monto = 5;
+  string estatus = 6;
+  string fecha_emision = 7;
+  string fecha_resolucion = 8;
+  int64 emitido_por_usuario_id = 9;
+  int64 reporte_id = 10;
+}
+
+message MultaResponse {
+  Multa multa = 1;
+}
+
+message ListaMultasResponse {
+  repeated Multa multas = 1;
 }

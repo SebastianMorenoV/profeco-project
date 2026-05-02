@@ -1,0 +1,463 @@
+###############################################################################
+# PROFECO — Colección de Peticiones para Pruebas
+###############################################################################
+# Uso: Instalar extensión "REST Client" en VS Code
+#      y hacer clic en "Send Request" sobre cada petición.
+#
+# GATEWAYS ENVOY:
+#   - Comercio:         http://localhost:8082
+#   - Consumidor Web:   http://localhost:8083
+#   - Consumidor Móvil: http://localhost:8084
+#   - PROFECO:          http://localhost:8085
+###############################################################################
+
+@gw_comercio = http://localhost:8082
+@gw_consumidor = http://localhost:8083
+@gw_profeco = http://localhost:8085
+
+###############################################################################
+# 1. HEALTH CHECK — PING DE TODOS LOS SERVICIOS
+###############################################################################
+
+### Ping Catálogo (via comercio)
+GET {{gw_comercio}}/api/catalogo/ping
+
+### Ping Comercio
+GET {{gw_comercio}}/api/comercios/ping
+
+### Ping Ofertas
+GET {{gw_comercio}}/api/ofertas/ping
+
+### Ping Reseñas
+GET {{gw_consumidor}}/api/resenias/ping
+
+### Ping Usuarios
+GET {{gw_consumidor}}/api/usuarios/ping
+
+### Ping Multas
+GET {{gw_profeco}}/api/multas/ping
+
+###############################################################################
+# 2. USUARIOS
+###############################################################################
+
+### 2.1 Registrar usuario consumidor
+POST {{gw_consumidor}}/api/usuarios
+Content-Type: application/json
+
+{
+    "nombre": "Carlos",
+    "apellido": "López",
+    "email": "carlos.lopez@gmail.com",
+    "telefono": "6441234567",
+    "tipo_usuario": "CONSUMIDOR"
+}
+
+### 2.2 Registrar usuario comerciante
+POST {{gw_comercio}}/api/usuarios
+Content-Type: application/json
+
+{
+    "nombre": "María",
+    "apellido": "García",
+    "email": "maria.garcia@negocio.com",
+    "telefono": "6449876543",
+    "tipo_usuario": "COMERCIANTE"
+}
+
+### 2.3 Registrar agente PROFECO
+POST {{gw_profeco}}/api/usuarios
+Content-Type: application/json
+
+{
+    "nombre": "Roberto",
+    "apellido": "Méndez",
+    "email": "roberto.mendez@profeco.gob.mx",
+    "telefono": "5551234567",
+    "tipo_usuario": "PROFECO"
+}
+
+### 2.4 Obtener usuario por ID
+GET {{gw_consumidor}}/api/usuarios/1
+
+### 2.5 Listar todos los usuarios
+GET {{gw_consumidor}}/api/usuarios
+
+### 2.6 Listar usuarios por tipo
+GET {{gw_consumidor}}/api/usuarios?tipo_usuario=CONSUMIDOR
+
+### 2.7 Buscar usuario por email
+GET {{gw_consumidor}}/api/usuarios/email/carlos.lopez@gmail.com
+
+### 2.8 Actualizar usuario
+PUT {{gw_consumidor}}/api/usuarios/1
+Content-Type: application/json
+
+{
+    "nombre": "Carlos Eduardo",
+    "telefono": "6441111111"
+}
+
+### 2.9 Eliminar usuario (soft delete)
+DELETE {{gw_consumidor}}/api/usuarios/7
+
+###############################################################################
+# 3. COMERCIOS
+###############################################################################
+
+### 3.1 Registrar comercio
+POST {{gw_comercio}}/api/comercios
+Content-Type: application/json
+
+{
+    "nombre_comercial": "OXXO Reforma",
+    "razon_social": "Cadena Comercial OXXO S.A. de C.V.",
+    "rfc": "CCO850101AB1",
+    "direccion": "Blvd. Reforma #456, Col. Centro",
+    "ciudad": "Obregón",
+    "estado": "Sonora",
+    "codigo_postal": "85000",
+    "telefono": "6442223344",
+    "email": "oxxo.reforma@oxxo.com",
+    "tipo_comercio": "TIENDA_CONVENIENCIA",
+    "latitud": 27.4863,
+    "longitud": -109.9401,
+    "id_propietario": 3
+}
+
+### 3.2 Obtener comercio por ID
+GET {{gw_comercio}}/api/comercios/1
+
+### 3.3 Listar todos los comercios
+GET {{gw_comercio}}/api/comercios
+
+### 3.4 Listar comercios por ciudad
+GET {{gw_comercio}}/api/comercios?ciudad=Obregón
+
+### 3.5 Listar comercios por tipo
+GET {{gw_comercio}}/api/comercios?tipo_comercio=SUPERMERCADO
+
+### 3.6 Buscar comercios por nombre
+GET {{gw_comercio}}/api/comercios/buscar?query=Soriana
+
+### 3.7 Actualizar comercio
+PUT {{gw_comercio}}/api/comercios/1
+Content-Type: application/json
+
+{
+    "nombre_comercial": "Soriana Mega Obregón",
+    "telefono": "6441112233"
+}
+
+### 3.8 Eliminar comercio (soft delete)
+DELETE {{gw_comercio}}/api/comercios/1
+
+### 3.9 Ver comercios desde consumidor
+GET {{gw_consumidor}}/api/comercios
+
+### 3.10 Buscar comercios desde consumidor
+GET {{gw_consumidor}}/api/comercios/buscar?query=Walmart
+
+###############################################################################
+# 4. CATÁLOGO — PRODUCTOS
+###############################################################################
+
+### 4.1 Crear producto
+POST {{gw_comercio}}/api/catalogo/productos
+Content-Type: application/json
+
+{
+    "nombre": "Pan Bimbo Blanco 680g",
+    "descripcion": "Pan de caja blanco grande",
+    "marca": "Bimbo",
+    "categoria": "ALIMENTOS",
+    "codigo_barras": "7501020512342",
+    "unidad_medida": "PIEZA"
+}
+
+### 4.2 Obtener producto por ID
+GET {{gw_comercio}}/api/catalogo/productos/1
+
+### 4.3 Buscar productos (todos)
+GET {{gw_comercio}}/api/catalogo/productos
+
+### 4.4 Buscar productos por nombre
+GET {{gw_consumidor}}/api/catalogo/productos?query=Leche
+
+### 4.5 Buscar productos por categoría
+GET {{gw_consumidor}}/api/catalogo/productos?categoria=ALIMENTOS
+
+### 4.6 Buscar productos por nombre + categoría
+GET {{gw_consumidor}}/api/catalogo/productos?query=Coca&categoria=BEBIDAS
+
+### 4.7 Actualizar producto
+PUT {{gw_comercio}}/api/catalogo/productos/1
+Content-Type: application/json
+
+{
+    "nombre": "Leche Lala Entera 1L (Actualizado)",
+    "marca": "Lala"
+}
+
+### 4.8 Eliminar producto (soft delete)
+DELETE {{gw_comercio}}/api/catalogo/productos/99
+
+###############################################################################
+# 5. CATÁLOGO — PRECIOS (Comparación)
+###############################################################################
+
+### 5.1 Registrar precio (comercio 1 reporta precio de producto 1)
+POST {{gw_comercio}}/api/catalogo/precios
+Content-Type: application/json
+
+{
+    "producto_id": 1,
+    "comercio_id": 1,
+    "precio": 29.50
+}
+
+### 5.2 Registrar precio del mismo producto en otro comercio
+POST {{gw_comercio}}/api/catalogo/precios
+Content-Type: application/json
+
+{
+    "producto_id": 1,
+    "comercio_id": 2,
+    "precio": 31.00
+}
+
+### 5.3 Comparar precios de un producto (consumidor)
+GET {{gw_consumidor}}/api/catalogo/productos/1/precios
+
+### 5.4 Actualizar precio existente
+PUT {{gw_comercio}}/api/catalogo/precios/1
+Content-Type: application/json
+
+{
+    "precio": 27.90
+}
+
+###############################################################################
+# 6. OFERTAS
+###############################################################################
+
+### 6.1 Publicar oferta (comerciante)
+POST {{gw_comercio}}/api/ofertas
+Content-Type: application/json
+
+{
+    "comercio_id": 2,
+    "titulo": "3x2 en Refrescos",
+    "descripcion": "Lleva 3 refrescos de 600ml y paga solo 2",
+    "precio_original": 57.00,
+    "precio_oferta": 38.00,
+    "porcentaje_descuento": 33.33,
+    "fecha_inicio": "2026-04-29",
+    "fecha_fin": "2026-04-30"
+}
+
+### 6.2 Obtener oferta por ID
+GET {{gw_comercio}}/api/ofertas/1
+
+### 6.3 Listar todas las ofertas
+GET {{gw_consumidor}}/api/ofertas
+
+### 6.4 Listar solo ofertas activas (consumidor)
+GET {{gw_consumidor}}/api/ofertas?solo_activas=true
+
+### 6.5 Ofertas de un comercio específico
+GET {{gw_consumidor}}/api/ofertas/comercio/1
+
+### 6.6 Actualizar oferta
+PUT {{gw_comercio}}/api/ofertas/1
+Content-Type: application/json
+
+{
+    "titulo": "3x2 en Refrescos — EXTENDIDO",
+    "fecha_fin": "2026-05-31"
+}
+
+### 6.7 Eliminar oferta (soft delete)
+DELETE {{gw_comercio}}/api/ofertas/1
+
+###############################################################################
+# 7. RESEÑAS
+###############################################################################
+
+### 7.1 Crear reseña (consumidor)
+POST {{gw_consumidor}}/api/resenias
+Content-Type: application/json
+
+{
+    "usuario_id": 1,
+    "comercio_id": 1,
+    "calificacion": 4,
+    "comentario": "Buen servicio, pero las filas son largas los fines de semana."
+}
+
+### 7.2 Obtener reseña por ID
+GET {{gw_consumidor}}/api/resenias/1
+
+### 7.3 Listar reseñas de un comercio
+GET {{gw_consumidor}}/api/resenias/comercio/1
+
+### 7.4 Promedio de calificación de un comercio
+GET {{gw_consumidor}}/api/resenias/comercio/1/promedio
+
+### 7.5 Actualizar reseña
+PUT {{gw_consumidor}}/api/resenias/1
+Content-Type: application/json
+
+{
+    "calificacion": 5,
+    "comentario": "Mejoró mucho el servicio, ahora tienen caja rápida."
+}
+
+### 7.6 Eliminar reseña
+DELETE {{gw_consumidor}}/api/resenias/1
+
+### 7.7 Ver reseñas desde el panel de comerciante
+GET {{gw_comercio}}/api/resenias/comercio/1
+
+### 7.8 Promedio desde panel de comerciante
+GET {{gw_comercio}}/api/resenias/comercio/1/promedio
+
+###############################################################################
+# 8. REPORTES (Consumidor → PROFECO)
+###############################################################################
+
+### 8.1 Consumidor crea reporte contra un comercio
+POST {{gw_consumidor}}/api/reportes
+Content-Type: application/json
+
+{
+    "usuario_id": 1,
+    "comercio_id": 1,
+    "motivo": "PRECIO_EXCESIVO",
+    "descripcion": "El kilo de tortilla lo están vendiendo a $35 cuando el precio tope es $22. Tengo ticket de compra como evidencia."
+}
+
+### 8.2 Consumidor crea otro reporte
+POST {{gw_consumidor}}/api/reportes
+Content-Type: application/json
+
+{
+    "usuario_id": 2,
+    "comercio_id": 3,
+    "motivo": "PUBLICIDAD_ENGANOSA",
+    "descripcion": "Anunciaron 50% de descuento en electrónica pero al llegar dicen que solo aplica en accesorios."
+}
+
+### 8.3 Consumidor consulta sus reportes
+GET {{gw_consumidor}}/api/reportes/usuario/1
+
+### 8.4 Obtener reporte por ID
+GET {{gw_consumidor}}/api/reportes/1
+
+### 8.5 PROFECO: Listar todos los reportes
+GET {{gw_profeco}}/api/reportes
+
+### 8.6 PROFECO: Filtrar reportes pendientes
+GET {{gw_profeco}}/api/reportes?estatus=PENDIENTE
+
+### 8.7 PROFECO: Cambiar estatus de reporte a EN_REVISION
+PUT {{gw_profeco}}/api/reportes/1/estatus
+Content-Type: application/json
+
+{
+    "estatus": "RESUELTO_SIN_ACCION"
+}
+
+###############################################################################
+# 9. MULTAS (Solo PROFECO)
+###############################################################################
+
+### 9.1 PROFECO emite multa vinculada a un reporte
+POST {{gw_profeco}}/api/multas
+Content-Type: application/json
+
+{
+    "comercio_id": 1,
+    "motivo": "PRECIO_EXCESIVO",
+    "descripcion": "Se verificó incremento injustificado del 59% en tortilla de maíz, superando el precio máximo establecido por la SE.",
+    "monto": 75000.00,
+    "emitido_por_usuario_id": 5,
+    "reporte_id": 1
+}
+
+### 9.2 PROFECO emite multa sin reporte (inspección directa)
+POST {{gw_profeco}}/api/multas
+Content-Type: application/json
+
+{
+    "comercio_id": 3,
+    "motivo": "PRODUCTO_ADULTERADO",
+    "descripcion": "Se encontraron productos con fecha de caducidad alterada en el área de lácteos.",
+    "monto": 120000.00,
+    "emitido_por_usuario_id": 5
+}
+
+### 9.3 Obtener multa por ID
+GET {{gw_profeco}}/api/multas/1
+
+### 9.4 Listar todas las multas
+GET {{gw_profeco}}/api/multas
+
+### 9.5 Filtrar multas pendientes
+GET {{gw_profeco}}/api/multas?estatus=PENDIENTE
+
+### 9.6 Multas de un comercio específico
+GET {{gw_profeco}}/api/multas/comercio/1
+
+### 9.7 Actualizar estatus de multa (comercio pagó)
+PUT {{gw_profeco}}/api/multas/1/estatus
+Content-Type: application/json
+
+{
+    "estatus": "PAGADA"
+}
+
+### 9.8 Comerciante ve sus multas
+GET {{gw_comercio}}/api/multas/comercio/1
+
+### 9.9 Consumidor ve multas de un comercio (transparencia)
+GET {{gw_consumidor}}/api/multas/comercio/1
+
+###############################################################################
+# 10. FLUJO COMPLETO: Consumidor reporta → PROFECO multa
+###############################################################################
+
+### PASO 1: Consumidor reporta publicidad engañosa
+POST {{gw_consumidor}}/api/reportes
+Content-Type: application/json
+
+{
+    "usuario_id": 1,
+    "comercio_id": 4,
+    "motivo": "INCUMPLIMIENTO_OFERTA",
+    "descripcion": "Walmart anuncia oferta 2x1 en Coca-Cola pero el sistema de caja cobra las dos al precio normal."
+}
+
+### PASO 2: PROFECO revisa y cambia estatus
+PUT {{gw_profeco}}/api/reportes/6/estatus
+Content-Type: application/json
+
+{
+    "estatus": "EN_REVISION"
+}
+
+### PASO 3: PROFECO confirma y emite multa
+POST {{gw_profeco}}/api/multas
+Content-Type: application/json
+
+{
+    "comercio_id": 4,
+    "motivo": "INCUMPLIMIENTO_OFERTA",
+    "descripcion": "Se confirmó el incumplimiento de la promoción 2x1 anunciada. El sistema de punto de venta no refleja el descuento.",
+    "monto": 45000.00,
+    "emitido_por_usuario_id": 5,
+    "reporte_id": 6
+}
+
+### PASO 4: Verificar que el reporte se actualizó
+GET {{gw_profeco}}/api/reportes/6

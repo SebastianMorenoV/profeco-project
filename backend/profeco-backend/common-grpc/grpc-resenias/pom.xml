@@ -53,7 +53,7 @@
                     <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
                     <pluginId>grpc-java</pluginId>
                     <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
-                    <temporaryProtoFileDirectory>${java.io.tmpdir}/protoc-${project.artifactId}</temporaryProtoFileDirectory>
+                    <temporaryProtoFileDirectory>${project.build.directory}/protoc-temp</temporaryProtoFileDirectory>
                     <writeDescriptorSet>true</writeDescriptorSet>
                     <descriptorSetOutputDirectory>${project.build.directory}/proto-descriptors</descriptorSetOutputDirectory>
                     <descriptorSetFileName>${project.artifactId}.pb</descriptorSetFileName>

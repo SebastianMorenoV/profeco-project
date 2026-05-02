@@ -8,20 +8,106 @@ option java_outer_classname = "ReseniasProto";
 
 package profeco.resenias.v1;
 
+// =============================================
+// SERVICIO DE RESEÑAS
+// =============================================
 service ReseniasService {
+
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/resenias/ping"
-      additional_bindings {
-        post: "/profeco.resenias.v1.ReseniasService/Ping"
-        body: "*"
-      }
+    };
+  }
+
+  rpc CrearResenia(CrearReseniaRequest) returns (ReseniaResponse) {
+    option (google.api.http) = {
+      post: "/api/resenias"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerResenia(IdRequest) returns (ReseniaResponse) {
+    option (google.api.http) = {
+      get: "/api/resenias/{id}"
+    };
+  }
+
+  rpc ListarPorComercio(IdRequest) returns (ListaReseniasResponse) {
+    option (google.api.http) = {
+      get: "/api/resenias/comercio/{id}"
+    };
+  }
+
+  rpc ActualizarResenia(ActualizarReseniaRequest) returns (ReseniaResponse) {
+    option (google.api.http) = {
+      put: "/api/resenias/{id}"
+      body: "*"
+    };
+  }
+
+  rpc EliminarResenia(IdRequest) returns (MensajeResponse) {
+    option (google.api.http) = {
+      delete: "/api/resenias/{id}"
+    };
+  }
+
+  rpc ObtenerPromedio(IdRequest) returns (PromedioResponse) {
+    option (google.api.http) = {
+      get: "/api/resenias/comercio/{id}/promedio"
     };
   }
 }
 
+// =============================================
+// MENSAJES
+// =============================================
 message Empty {}
 
 message PingResponse {
   string mensaje = 1;
+}
+
+message MensajeResponse {
+  string mensaje = 1;
+  bool exito = 2;
+}
+
+message IdRequest {
+  int64 id = 1;
+}
+
+message CrearReseniaRequest {
+  int64 usuario_id = 1;
+  int64 comercio_id = 2;
+  int32 calificacion = 3; // 1-5
+  string comentario = 4;
+}
+
+message ActualizarReseniaRequest {
+  int64 id = 1;
+  int32 calificacion = 2;
+  string comentario = 3;
+}
+
+message Resenia {
+  int64 id = 1;
+  int64 usuario_id = 2;
+  int64 comercio_id = 3;
+  int32 calificacion = 4;
+  string comentario = 5;
+  string fecha_creacion = 6;
+}
+
+message ReseniaResponse {
+  Resenia resenia = 1;
+}
+
+message ListaReseniasResponse {
+  repeated Resenia resenias = 1;
+}
+
+message PromedioResponse {
+  int64 comercio_id = 1;
+  double promedio = 2;
+  int32 total_resenias = 3;
 }

@@ -2,59 +2,170 @@ syntax = "proto3";
 
 import "google/api/annotations.proto";
 
-// Estas opciones le dicen al plugin cómo generar las clases en Java
 option java_multiple_files = true;
 option java_package = "com.mycompany.grpc.catalogo";
 option java_outer_classname = "CatalogoProto";
 
 package profeco.catalogo.v1;
 
-// --- EL SERVICIO ---
+// =============================================
+// SERVICIO DE CATÁLOGO (EL MÁS COMPLEJO)
+// Gestiona productos y la comparación de precios
+// =============================================
 service CatalogoService {
-  // Tarea 1.3: El método para validar que el cable funciona
+
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/catalogo/ping"
-      additional_bindings {
-        post: "/profeco.catalogo.v1.CatalogoService/Ping"
-        body: "*"
-      }
     };
   }
 
-  // Tarea 1.4: El método real para la Prueba de Concepto (Flujo Síncrono)
-  rpc BuscarProductos(BuscarRequest) returns (ListaProductosResponse) {
+  // --- PRODUCTOS ---
+
+  rpc CrearProducto(CrearProductoRequest) returns (ProductoResponse) {
+    option (google.api.http) = {
+      post: "/api/catalogo/productos"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerProducto(IdRequest) returns (ProductoResponse) {
+    option (google.api.http) = {
+      get: "/api/catalogo/productos/{id}"
+    };
+  }
+
+  rpc BuscarProductos(BuscarProductosRequest) returns (ListaProductosResponse) {
     option (google.api.http) = {
       get: "/api/catalogo/productos"
-      additional_bindings {
-        post: "/profeco.catalogo.v1.CatalogoService/BuscarProductos"
-        body: "*"
-      }
+    };
+  }
+
+  rpc ActualizarProducto(ActualizarProductoRequest) returns (ProductoResponse) {
+    option (google.api.http) = {
+      put: "/api/catalogo/productos/{id}"
+      body: "*"
+    };
+  }
+
+  rpc EliminarProducto(IdRequest) returns (MensajeResponse) {
+    option (google.api.http) = {
+      delete: "/api/catalogo/productos/{id}"
+    };
+  }
+
+  // --- PRECIOS (Comparación entre comercios) ---
+
+  rpc RegistrarPrecio(RegistrarPrecioRequest) returns (PrecioResponse) {
+    option (google.api.http) = {
+      post: "/api/catalogo/precios"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerPreciosProducto(IdRequest) returns (ListaPreciosResponse) {
+    option (google.api.http) = {
+      get: "/api/catalogo/productos/{id}/precios"
+    };
+  }
+
+  rpc ActualizarPrecio(ActualizarPrecioRequest) returns (PrecioResponse) {
+    option (google.api.http) = {
+      put: "/api/catalogo/precios/{id}"
+      body: "*"
     };
   }
 }
 
-// --- LOS MENSAJES (DTOs) ---
-
-// Mensajes genéricos para el Ping/Pong
+// =============================================
+// MENSAJES
+// =============================================
 message Empty {}
 
 message PingResponse {
   string mensaje = 1;
 }
 
-// Mensajes para el caso de uso real
-message BuscarRequest {
-  string query = 1; // Ej. "leche", "huevo"
+message MensajeResponse {
+  string mensaje = 1;
+  bool exito = 2;
+}
+
+message IdRequest {
+  int64 id = 1;
+}
+
+// --- Productos ---
+
+message CrearProductoRequest {
+  string nombre = 1;
+  string descripcion = 2;
+  string marca = 3;
+  string categoria = 4; // ALIMENTOS, BEBIDAS, HIGIENE, etc.
+  string codigo_barras = 5;
+  string unidad_medida = 6;
+}
+
+message ActualizarProductoRequest {
+  int64 id = 1;
+  string nombre = 2;
+  string descripcion = 3;
+  string marca = 4;
+  string categoria = 5;
+  string codigo_barras = 6;
+  string unidad_medida = 7;
+}
+
+message BuscarProductosRequest {
+  string query = 1;     // búsqueda por nombre
+  string categoria = 2; // filtro opcional
 }
 
 message Producto {
-  string id = 1;
+  int64 id = 1;
   string nombre = 2;
-  double precio = 3;
-  string supermercado = 4; // Para saber quién lo vende
+  string descripcion = 3;
+  string marca = 4;
+  string categoria = 5;
+  string codigo_barras = 6;
+  string unidad_medida = 7;
+  bool activo = 8;
+  string fecha_creacion = 9;
+}
+
+message ProductoResponse {
+  Producto producto = 1;
 }
 
 message ListaProductosResponse {
-  repeated Producto productos = 1; // "repeated" significa que es una lista/array
+  repeated Producto productos = 1;
+}
+
+// --- Precios ---
+
+message RegistrarPrecioRequest {
+  int64 producto_id = 1;
+  int64 comercio_id = 2;
+  double precio = 3;
+}
+
+message ActualizarPrecioRequest {
+  int64 id = 1;
+  double precio = 2;
+}
+
+message PrecioProducto {
+  int64 id = 1;
+  int64 producto_id = 2;
+  int64 comercio_id = 3;
+  double precio = 4;
+  string fecha_reporte = 5;
+}
+
+message PrecioResponse {
+  PrecioProducto precio = 1;
+}
+
+message ListaPreciosResponse {
+  repeated PrecioProducto precios = 1;
 }

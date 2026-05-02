@@ -59,6 +59,8 @@ static_resources:
                         # Si el paquete es de usuarios, mándalo al cluster ms-usuarios
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
                           route: { cluster: ms-usuarios }
+                        - match: { prefix: "/profeco.multas.v1.MultasService/" }
+                          route: { cluster: ms-multas }
 
                 # ---------------------------------------------------------
                 # 3. HTTP FILTERS (Filtros HTTP)
@@ -82,6 +84,7 @@ static_resources:
                         - "profeco.ofertas.v1.OfertasService"
                         - "profeco.resenias.v1.ReseniasService"
                         - "profeco.usuarios.v1.UsuariosService"
+                        - "profeco.multas.v1.MultasService"
                       print_options: { add_whitespace: true }
                       auto_mapping: true
                   
@@ -130,4 +133,11 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9096 } } } }] }] }
+
+    # Cluster del MS Multas (corre en el puerto 9097)
+    - name: ms-multas
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9097 } } } }] }] }
 

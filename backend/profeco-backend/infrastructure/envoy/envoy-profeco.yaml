@@ -1,3 +1,9 @@
+# ==========================================
+# CONFIGURACIÓN DE ENVOY PARA: GATEWAY PROFECO
+# ==========================================
+# Usado por agentes PROFECO para fiscalizar comercios.
+# Accede a: multas (CRUD), comercio (lectura), catálogo (lectura), reseñas (lectura), usuarios.
+
 static_resources:
   listeners:
     - name: listener_profeco
@@ -22,6 +28,14 @@ static_resources:
                       routes:
                         - match: { prefix: "/profeco.multas.v1.MultasService/" }
                           route: { cluster: ms-multas }
+                        - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
+                          route: { cluster: ms-comercio }
+                        - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
+                          route: { cluster: ms-catalogo }
+                        - match: { prefix: "/profeco.resenias.v1.ReseniasService/" }
+                          route: { cluster: ms-resenias }
+                        - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
+                          route: { cluster: ms-usuarios }
                 http_filters:
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
@@ -31,6 +45,10 @@ static_resources:
                       proto_descriptor: "/etc/envoy/proto/gateway-profeco.pb"
                       services:
                         - "profeco.multas.v1.MultasService"
+                        - "profeco.comercio.v1.ComercioService"
+                        - "profeco.catalogo.v1.CatalogoService"
+                        - "profeco.resenias.v1.ReseniasService"
+                        - "profeco.usuarios.v1.UsuariosService"
                       print_options: { add_whitespace: true }
                       auto_mapping: true
                   - name: envoy.filters.http.router
@@ -42,3 +60,23 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9097 } } } }] }] }
+    - name: ms-comercio
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9092 } } } }] }] }
+    - name: ms-catalogo
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9091 } } } }] }] }
+    - name: ms-resenias
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-resenias, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9094 } } } }] }] }
+    - name: ms-usuarios
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9096 } } } }] }] }

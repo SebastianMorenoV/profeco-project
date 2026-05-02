@@ -68,13 +68,17 @@
                                 <chmod file="${protoc.bin}" perm="755" osfamily="unix"/>
                                 <mkdir dir="${pb.out}"/>
 
-                                <echo message="==> gateway-comercio.pb (Comercio + Catalogo + Ofertas)"/>
+                                <!-- ============================================= -->
+                                <!-- GATEWAY COMERCIO: comercio + catalogo + ofertas + resenias + usuarios + multas -->
+                                <!-- ============================================= -->
+                                <echo message="==> gateway-comercio.pb (Comercio + Catalogo + Ofertas + Resenias + Usuarios + Multas)"/>
                                 <exec executable="${protoc.bin}" failonerror="true">
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-comercio/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-catalogo/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-ofertas/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-resenias/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-usuarios/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-multas/src/main/proto"/>
                                     <arg value="--include_imports"/>
                                     <arg value="--include_source_info"/>
                                     <arg value="--descriptor_set_out=${pb.out}/gateway-comercio.pb"/>
@@ -83,30 +87,49 @@
                                     <arg value="ofertas.proto"/>
                                     <arg value="resenias.proto"/>
                                     <arg value="usuarios.proto"/>
+                                    <arg value="multas.proto"/>
                                 </exec>
 
-                                <echo message="==> gateway-consumidor.pb (Catalogo + Resenias)"/>
+                                <!-- ============================================= -->
+                                <!-- GATEWAY CONSUMIDOR: catalogo + comercio + resenias + ofertas + multas + usuarios -->
+                                <!-- ============================================= -->
+                                <echo message="==> gateway-consumidor.pb (Catalogo + Comercio + Resenias + Ofertas + Multas + Usuarios)"/>
                                 <exec executable="${protoc.bin}" failonerror="true">
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-catalogo/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-comercio/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-resenias/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-ofertas/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-multas/src/main/proto"/>
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-usuarios/src/main/proto"/>
                                     <arg value="--include_imports"/>
                                     <arg value="--include_source_info"/>
                                     <arg value="--descriptor_set_out=${pb.out}/gateway-consumidor.pb"/>
                                     <arg value="catalogo.proto"/>
+                                    <arg value="comercio.proto"/>
                                     <arg value="resenias.proto"/>
+                                    <arg value="ofertas.proto"/>
                                     <arg value="multas.proto"/>
                                     <arg value="usuarios.proto"/>
                                 </exec>
 
-                                <echo message="==> gateway-profeco.pb (Multas + Usuarios)"/>
+                                <!-- ============================================= -->
+                                <!-- GATEWAY PROFECO: multas + comercio + catalogo + resenias + usuarios -->
+                                <!-- ============================================= -->
+                                <echo message="==> gateway-profeco.pb (Multas + Comercio + Catalogo + Resenias + Usuarios)"/>
                                 <exec executable="${protoc.bin}" failonerror="true">
                                     <arg value="-I"/><arg value="${grpc.proto.root}/grpc-multas/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-comercio/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-catalogo/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-resenias/src/main/proto"/>
+                                    <arg value="-I"/><arg value="${grpc.proto.root}/grpc-usuarios/src/main/proto"/>
                                     <arg value="--include_imports"/>
                                     <arg value="--include_source_info"/>
                                     <arg value="--descriptor_set_out=${pb.out}/gateway-profeco.pb"/>
                                     <arg value="multas.proto"/>
+                                    <arg value="comercio.proto"/>
+                                    <arg value="catalogo.proto"/>
+                                    <arg value="resenias.proto"/>
+                                    <arg value="usuarios.proto"/>
                                 </exec>
                             </target>
                         </configuration>

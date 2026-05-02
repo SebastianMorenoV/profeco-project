@@ -1,3 +1,9 @@
+# ==========================================
+# CONFIGURACIÓN DE ENVOY PARA: GATEWAY CONSUMIDOR MÓVIL
+# ==========================================
+# Mismos servicios que consumidor web pero en puerto separado
+# para la app Android (Kotlin). CORS permisivo para peticiones desde la app.
+
 static_resources:
   listeners:
     - name: listener_consumidor_movil
@@ -16,14 +22,18 @@ static_resources:
                     - name: backend
                       domains: ["*"]
                       cors:
-                        allow_origin_string_match: [{ prefix: "http://localhost" }]
+                        allow_origin_string_match: [{ prefix: "*" }]
                         allow_methods: "GET, POST, PUT, DELETE, OPTIONS"
                         allow_headers: "Content-Type, Authorization"
                       routes:
                         - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
                           route: { cluster: ms-catalogo }
+                        - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
+                          route: { cluster: ms-comercio }
                         - match: { prefix: "/profeco.resenias.v1.ReseniasService/" }
                           route: { cluster: ms-resenias }
+                        - match: { prefix: "/profeco.ofertas.v1.OfertasService/" }
+                          route: { cluster: ms-ofertas }
                         - match: { prefix: "/profeco.multas.v1.MultasService/" }
                           route: { cluster: ms-multas }
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
@@ -37,7 +47,9 @@ static_resources:
                       proto_descriptor: "/etc/envoy/proto/gateway-consumidor.pb"
                       services:
                         - "profeco.catalogo.v1.CatalogoService"
+                        - "profeco.comercio.v1.ComercioService"
                         - "profeco.resenias.v1.ReseniasService"
+                        - "profeco.ofertas.v1.OfertasService"
                         - "profeco.multas.v1.MultasService"
                         - "profeco.usuarios.v1.UsuariosService"
                       print_options: { add_whitespace: true }
@@ -51,11 +63,21 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9091 } } } }] }] }
+    - name: ms-comercio
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9092 } } } }] }] }
     - name: ms-resenias
       type: STRICT_DNS
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-resenias, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9094 } } } }] }] }
+    - name: ms-ofertas
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9095 } } } }] }] }
     - name: ms-multas
       type: STRICT_DNS
       dns_lookup_family: V4_ONLY

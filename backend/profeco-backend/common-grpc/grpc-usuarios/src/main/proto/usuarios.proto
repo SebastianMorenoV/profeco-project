@@ -8,20 +8,113 @@ option java_outer_classname = "UsuariosProto";
 
 package profeco.usuarios.v1;
 
+// =============================================
+// SERVICIO DE USUARIOS
+// =============================================
 service UsuariosService {
+
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
       get: "/api/usuarios/ping"
-      additional_bindings {
-        post: "/profeco.usuarios.v1.UsuariosService/Ping"
-        body: "*"
-      }
+    };
+  }
+
+  rpc RegistrarUsuario(RegistrarUsuarioRequest) returns (UsuarioResponse) {
+    option (google.api.http) = {
+      post: "/api/usuarios"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerUsuario(IdRequest) returns (UsuarioResponse) {
+    option (google.api.http) = {
+      get: "/api/usuarios/{id}"
+    };
+  }
+
+  rpc ListarUsuarios(ListarUsuariosRequest) returns (ListaUsuariosResponse) {
+    option (google.api.http) = {
+      get: "/api/usuarios"
+    };
+  }
+
+  rpc ActualizarUsuario(ActualizarUsuarioRequest) returns (UsuarioResponse) {
+    option (google.api.http) = {
+      put: "/api/usuarios/{id}"
+      body: "*"
+    };
+  }
+
+  rpc EliminarUsuario(IdRequest) returns (MensajeResponse) {
+    option (google.api.http) = {
+      delete: "/api/usuarios/{id}"
+    };
+  }
+
+  rpc BuscarPorEmail(EmailRequest) returns (UsuarioResponse) {
+    option (google.api.http) = {
+      get: "/api/usuarios/email/{email}"
     };
   }
 }
 
+// =============================================
+// MENSAJES
+// =============================================
 message Empty {}
 
 message PingResponse {
   string mensaje = 1;
+}
+
+message MensajeResponse {
+  string mensaje = 1;
+  bool exito = 2;
+}
+
+message IdRequest {
+  int64 id = 1;
+}
+
+message EmailRequest {
+  string email = 1;
+}
+
+message RegistrarUsuarioRequest {
+  string nombre = 1;
+  string apellido = 2;
+  string email = 3;
+  string telefono = 4;
+  string tipo_usuario = 5; // CONSUMIDOR, COMERCIANTE, PROFECO
+}
+
+message ActualizarUsuarioRequest {
+  int64 id = 1;
+  string nombre = 2;
+  string apellido = 3;
+  string email = 4;
+  string telefono = 5;
+}
+
+message ListarUsuariosRequest {
+  string tipo_usuario = 1; // filtro opcional
+}
+
+message Usuario {
+  int64 id = 1;
+  string nombre = 2;
+  string apellido = 3;
+  string email = 4;
+  string telefono = 5;
+  string tipo_usuario = 6;
+  bool activo = 7;
+  string fecha_registro = 8;
+}
+
+message UsuarioResponse {
+  Usuario usuario = 1;
+}
+
+message ListaUsuariosResponse {
+  repeated Usuario usuarios = 1;
 }

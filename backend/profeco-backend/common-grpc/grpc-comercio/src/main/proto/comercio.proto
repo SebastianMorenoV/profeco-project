@@ -8,20 +8,136 @@ option java_outer_classname = "ComercioProto";
 
 package profeco.comercio.v1;
 
+// =============================================
+// SERVICIO DE COMERCIO
+// =============================================
 service ComercioService {
+
   rpc Ping(Empty) returns (PingResponse) {
     option (google.api.http) = {
-      get: "/api/comercio/ping"
-      additional_bindings {
-        post: "/profeco.comercio.v1.ComercioService/Ping"
-        body: "*"
-      }
+      get: "/api/comercios/ping"
+    };
+  }
+
+  rpc RegistrarComercio(RegistrarComercioRequest) returns (ComercioResponse) {
+    option (google.api.http) = {
+      post: "/api/comercios"
+      body: "*"
+    };
+  }
+
+  rpc ObtenerComercio(IdRequest) returns (ComercioResponse) {
+    option (google.api.http) = {
+      get: "/api/comercios/{id}"
+    };
+  }
+
+  rpc ListarComercios(ListarComerciosRequest) returns (ListaComerciosResponse) {
+    option (google.api.http) = {
+      get: "/api/comercios"
+    };
+  }
+
+  rpc ActualizarComercio(ActualizarComercioRequest) returns (ComercioResponse) {
+    option (google.api.http) = {
+      put: "/api/comercios/{id}"
+      body: "*"
+    };
+  }
+
+  rpc EliminarComercio(IdRequest) returns (MensajeResponse) {
+    option (google.api.http) = {
+      delete: "/api/comercios/{id}"
+    };
+  }
+
+  rpc BuscarComercios(BuscarComerciosRequest) returns (ListaComerciosResponse) {
+    option (google.api.http) = {
+      get: "/api/comercios/buscar"
     };
   }
 }
 
+// =============================================
+// MENSAJES
+// =============================================
 message Empty {}
 
 message PingResponse {
   string mensaje = 1;
+}
+
+message MensajeResponse {
+  string mensaje = 1;
+  bool exito = 2;
+}
+
+message IdRequest {
+  int64 id = 1;
+}
+
+message RegistrarComercioRequest {
+  string nombre_comercial = 1;
+  string razon_social = 2;
+  string rfc = 3;
+  string direccion = 4;
+  string ciudad = 5;
+  string estado = 6;
+  string codigo_postal = 7;
+  string telefono = 8;
+  string email = 9;
+  string tipo_comercio = 10; // SUPERMERCADO, TIENDA_CONVENIENCIA, FARMACIA, MERCADO, DEPARTAMENTAL
+  double latitud = 11;
+  double longitud = 12;
+  int64 id_propietario = 13;
+}
+
+message ActualizarComercioRequest {
+  int64 id = 1;
+  string nombre_comercial = 2;
+  string razon_social = 3;
+  string rfc = 4;
+  string direccion = 5;
+  string ciudad = 6;
+  string estado = 7;
+  string codigo_postal = 8;
+  string telefono = 9;
+  string email = 10;
+  string tipo_comercio = 11;
+}
+
+message ListarComerciosRequest {
+  string ciudad = 1;     // filtro opcional
+  string tipo_comercio = 2; // filtro opcional
+}
+
+message BuscarComerciosRequest {
+  string query = 1; // búsqueda por nombre
+}
+
+message Comercio {
+  int64 id = 1;
+  string nombre_comercial = 2;
+  string razon_social = 3;
+  string rfc = 4;
+  string direccion = 5;
+  string ciudad = 6;
+  string estado = 7;
+  string codigo_postal = 8;
+  string telefono = 9;
+  string email = 10;
+  string tipo_comercio = 11;
+  double latitud = 12;
+  double longitud = 13;
+  int64 id_propietario = 14;
+  bool activo = 15;
+  string fecha_registro = 16;
+}
+
+message ComercioResponse {
+  Comercio comercio = 1;
+}
+
+message ListaComerciosResponse {
+  repeated Comercio comercios = 1;
 }

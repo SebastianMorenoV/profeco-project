@@ -1,0 +1,146 @@
+# ==========================================
+# DOCKER COMPOSE: MICROSERVICIOS PROFECO
+# ==========================================
+# Levanta los 6 microservicios Spring Boot en contenedores.
+# MySQL y RabbitMQ deben estar corriendo en el host.
+#
+# Uso:
+#   docker compose up -d --build
+#   docker compose logs -f ms-catalogo
+#   docker compose down
+# ==========================================
+
+services:
+
+  ms-catalogo:
+    build:
+      context: ./ms-catalogo
+      dockerfile: Dockerfile
+    container_name: ms-catalogo
+    ports:
+      - "8091:8091"
+      - "9091:9091"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/catalogo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itson
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+
+  ms-comercio:
+    build:
+      context: ./ms-comercio
+      dockerfile: Dockerfile
+    container_name: ms-comercio
+    ports:
+      - "8092:8092"
+      - "9092:9092"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/comercio_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itson
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+
+  ms-ofertas:
+    build:
+      context: ./ms-ofertas
+      dockerfile: Dockerfile
+    container_name: ms-ofertas
+    ports:
+      - "8095:8095"
+      - "9095:9095"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/ofertas_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itson
+      - SPRING_RABBITMQ_HOST=host.docker.internal
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+
+  ms-resenias:
+    build:
+      context: ./ms-resenias
+      dockerfile: Dockerfile
+    container_name: ms-resenias
+    ports:
+      - "8094:8094"
+      - "9094:9094"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/resenias_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itson
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+
+  ms-usuarios:
+    build:
+      context: ./ms-usuarios
+      dockerfile: Dockerfile
+    container_name: ms-usuarios
+    ports:
+      - "8096:8096"
+      - "9096:9096"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/usuarios_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itson
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+
+  ms-multas:
+    build:
+      context: ./ms-multas
+      dockerfile: Dockerfile
+    container_name: ms-multas
+    ports:
+      - "8097:8097"
+      - "9097:9097"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/multas_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=itson
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
