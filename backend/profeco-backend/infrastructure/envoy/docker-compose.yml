@@ -11,6 +11,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    networks:
+      - profeco-net
 
   gateway-consumidor:
     image: envoyproxy/envoy:v1.31-latest
@@ -24,6 +26,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    networks:
+      - profeco-net
 
   gateway-consumidor-movil:
     image: envoyproxy/envoy:v1.31-latest
@@ -37,6 +41,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    networks:
+      - profeco-net
 
   gateway-profeco:
     image: envoyproxy/envoy:v1.31-latest
@@ -50,3 +56,10 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    networks:
+      - profeco-net
+
+networks:
+  profeco-net:
+    external: true
+
