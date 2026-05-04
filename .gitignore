@@ -41,3 +41,9 @@ Thumbs.db
 # 5. Variables de entorno locales (Seguridad futura)
 # ==========================================
 .env
+
+# ==========================================
+# 6. Firebase
+# ==========================================
+**/google-services.json
+**/serviceAccountKey.json
