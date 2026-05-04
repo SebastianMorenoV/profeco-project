@@ -50,6 +50,8 @@ static_resources:
                           route: { cluster: ms-resenias }
                         - match: { prefix: "/api/ofertas" }
                           route: { cluster: ms-ofertas }
+                        - match: { prefix: "/api/reportes" }
+                          route: { cluster: ms-multas }
                         - match: { prefix: "/api/multas" }
                           route: { cluster: ms-multas }
                         - match: { prefix: "/api/usuarios" }

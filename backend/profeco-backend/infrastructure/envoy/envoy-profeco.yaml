@@ -40,6 +40,8 @@ static_resources:
                           route: { cluster: ms-resenias }
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
                           route: { cluster: ms-usuarios }
+                        - match: { prefix: "/api/reportes" }
+                          route: { cluster: ms-multas }
                         - match: { prefix: "/api/multas" }
                           route: { cluster: ms-multas }
                         - match: { prefix: "/api/comercios" }

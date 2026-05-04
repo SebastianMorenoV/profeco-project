@@ -1,0 +1,6 @@
+/* Estilos base mínimos: el panel PROFECO vive en styles/global.css.
+   Evitamos :root con dark mode / fondo oscuro (rompía el área bajo la tabla). */
+
+body {
+  margin: 0;
+}
