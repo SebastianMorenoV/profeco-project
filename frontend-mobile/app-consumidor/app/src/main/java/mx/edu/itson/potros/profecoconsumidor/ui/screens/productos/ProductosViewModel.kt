@@ -25,7 +25,11 @@ class ProductosViewModel : ViewModel() {
             delay(300)
             _productos.value = UiState.Loading
             _productos.value = try {
-                UiState.Success(ServiceLocator.catalogo.buscarProductos(query, categoria))
+                val resultados = ServiceLocator.catalogo.buscarProductos(query, categoria)
+                if (query.isNotBlank() && resultados.isNotEmpty()) {
+                    ServiceLocator.prefs.registrarBusqueda(query)
+                }
+                UiState.Success(resultados)
             } catch (t: Throwable) {
                 UiState.Error(t.message ?: "No se pudieron cargar los productos")
             }

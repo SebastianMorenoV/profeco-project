@@ -3,8 +3,11 @@ package mx.edu.itson.potros.profecoconsumidor.ui.screens.productos
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ComercioDto
@@ -23,7 +26,15 @@ class ProductoDetalleViewModel : ViewModel() {
     private val _state = MutableStateFlow<UiState<ProductoDetalleData>>(UiState.Loading)
     val state: StateFlow<UiState<ProductoDetalleData>> = _state.asStateFlow()
 
+    private val _productoActual = MutableStateFlow(0L)
+
+    val esWishlist: StateFlow<Boolean> =
+        combine(ServiceLocator.prefs.state, _productoActual) { prefs, id ->
+            id != 0L && prefs.wishlist.contains(id)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun cargar(productoId: Long) {
+        _productoActual.value = productoId
         viewModelScope.launch {
             _state.value = UiState.Loading
             _state.value = try {
@@ -38,5 +49,15 @@ class ProductoDetalleViewModel : ViewModel() {
                 UiState.Error(t.message ?: "No se pudo cargar el producto")
             }
         }
+    }
+
+    fun toggleWishlist() {
+        val id = _productoActual.value
+        if (id == 0L) return
+        viewModelScope.launch { ServiceLocator.prefs.toggleProductoWishlist(id) }
+    }
+
+    fun agregarALista(nombre: String) {
+        viewModelScope.launch { ServiceLocator.prefs.agregarItemListaCompras(nombre) }
     }
 }

@@ -18,4 +18,8 @@ class PerfilViewModel : ViewModel() {
     fun actualizarBaseUrl(url: String) {
         viewModelScope.launch { ServiceLocator.prefs.setBaseUrl(url) }
     }
+
+    fun limpiarBusquedas() {
+        viewModelScope.launch { ServiceLocator.prefs.limpiarBusquedas() }
+    }
 }

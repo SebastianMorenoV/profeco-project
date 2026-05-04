@@ -10,14 +10,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -51,9 +51,13 @@ fun HomeScreen(
     onVerOfertas: () -> Unit,
     onVerProductos: () -> Unit,
     onVerComercios: () -> Unit,
+    onVerFavoritos: () -> Unit,
+    onVerWishlist: () -> Unit,
+    onVerListaCompras: () -> Unit,
     vm: HomeViewModel = viewModel()
 ) {
     val state by vm.ofertas.collectAsStateWithLifecycle()
+    val recientes by vm.busquedasRecientes.collectAsStateWithLifecycle(initialValue = emptyList())
     var query by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) { vm.cargar() }
@@ -63,6 +67,36 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item { Hero(query = query, onQueryChange = { query = it }, onSubmit = { onBuscar(query) }) }
+
+        if (recientes.isNotEmpty()) {
+            item {
+                Text("Tus búsquedas recientes", style = MaterialTheme.typography.titleMedium)
+            }
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(recientes) { q ->
+                        AssistChip(
+                            onClick = { onBuscar(q) },
+                            label = { Text(q) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Text("Mis listas", style = MaterialTheme.typography.titleLarge)
+        }
+        item {
+            ListasRow(
+                onFavoritos = onVerFavoritos,
+                onWishlist = onVerWishlist,
+                onListaCompras = onVerListaCompras
+            )
+        }
 
         item {
             Row(
@@ -90,9 +124,7 @@ fun HomeScreen(
                 if (destacadas.isEmpty()) {
                     item { EmptyState("Aún no hay ofertas publicadas") }
                 } else {
-                    items(destacadas) { o ->
-                        OfertaCard(o)
-                    }
+                    items(destacadas) { o -> OfertaCard(o) }
                 }
             }
         }
@@ -162,7 +194,6 @@ private fun Hero(
                     value = query,
                     onValueChange = onQueryChange,
                     placeholder = { Text("Busca un producto…", color = Color.White.copy(alpha = 0.7f)) },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = Color.White) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
@@ -170,6 +201,62 @@ private fun Hero(
                 )
                 Button(onClick = onSubmit) { Text("Buscar") }
             }
+        }
+    }
+}
+
+@Composable
+private fun ListasRow(
+    onFavoritos: () -> Unit,
+    onWishlist: () -> Unit,
+    onListaCompras: () -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        ListaTile(
+            titulo = "Favoritos",
+            sub = "Comercios con ★",
+            onClick = onFavoritos,
+            modifier = Modifier.weight(1f)
+        )
+        ListaTile(
+            titulo = "Wishlist",
+            sub = "Productos con ❤",
+            onClick = onWishlist,
+            modifier = Modifier.weight(1f)
+        )
+        ListaTile(
+            titulo = "Lista",
+            sub = "Compras",
+            onClick = onListaCompras,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun ListaTile(
+    titulo: String,
+    sub: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(14.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(titulo, style = MaterialTheme.typography.titleMedium)
+            Text(
+                sub,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

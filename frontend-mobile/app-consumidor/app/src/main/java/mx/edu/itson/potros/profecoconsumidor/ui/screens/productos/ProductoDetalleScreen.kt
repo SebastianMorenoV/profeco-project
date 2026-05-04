@@ -12,11 +12,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.AddShoppingCart
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +41,7 @@ import mx.edu.itson.potros.profecoconsumidor.ui.components.Chip
 import mx.edu.itson.potros.profecoconsumidor.ui.components.EmptyState
 import mx.edu.itson.potros.profecoconsumidor.ui.components.ErrorBox
 import mx.edu.itson.potros.profecoconsumidor.ui.components.Loader
+import mx.edu.itson.potros.profecoconsumidor.ui.components.SuccessBox
 import mx.edu.itson.potros.profecoconsumidor.ui.theme.ProfecoBest
 import mx.edu.itson.potros.profecoconsumidor.util.formatDate
 import mx.edu.itson.potros.profecoconsumidor.util.formatMXN
@@ -43,6 +53,8 @@ fun ProductoDetalleScreen(
     vm: ProductoDetalleViewModel = viewModel()
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val esWishlist by vm.esWishlist.collectAsStateWithLifecycle()
+    var msgLista by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(productoId) { vm.cargar(productoId) }
 
@@ -58,6 +70,13 @@ fun ProductoDetalleScreen(
                     producto = data.producto,
                     precios = data.precios,
                     comercios = data.comercios,
+                    esWishlist = esWishlist,
+                    msgLista = msgLista,
+                    onToggleWishlist = vm::toggleWishlist,
+                    onAgregarALista = {
+                        vm.agregarALista(data.producto.nombre)
+                        msgLista = "Agregado a tu lista de compras"
+                    },
                     onAbrirComercio = onAbrirComercio
                 )
             }
@@ -70,6 +89,10 @@ private fun Contenido(
     producto: ProductoDto,
     precios: List<PrecioDto>,
     comercios: Map<Long, ComercioDto>,
+    esWishlist: Boolean,
+    msgLista: String?,
+    onToggleWishlist: () -> Unit,
+    onAgregarALista: () -> Unit,
     onAbrirComercio: (Long) -> Unit
 ) {
     val ordenados = precios.sortedBy { it.precio }
@@ -105,6 +128,38 @@ private fun Contenido(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onToggleWishlist,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = if (esWishlist) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = null,
+                                tint = if (esWishlist) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                if (esWishlist) "  En wishlist" else "  Wishlist",
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = onAgregarALista,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Outlined.AddShoppingCart, contentDescription = null)
+                            Text("  A mi lista", modifier = Modifier.padding(start = 4.dp))
+                        }
+                    }
+                    if (msgLista != null) {
+                        SuccessBox(msgLista, modifier = Modifier.padding(top = 8.dp))
                     }
                 }
             }

@@ -13,6 +13,9 @@ object Routes {
     const val REPORTAR = "reportar?comercioId={comercioId}"
     const val REPORTAR_BASE = "reportar"
     const val PERFIL = "perfil"
+    const val MIS_FAVORITOS = "mis-favoritos"
+    const val MI_WISHLIST = "mi-wishlist"
+    const val LISTA_COMPRAS = "lista-compras"
 
     fun productos(query: String? = null, categoria: String? = null): String {
         val q = query?.takeIf { it.isNotBlank() } ?: ""

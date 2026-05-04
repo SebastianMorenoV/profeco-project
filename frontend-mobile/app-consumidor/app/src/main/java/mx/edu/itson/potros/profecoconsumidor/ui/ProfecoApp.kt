@@ -26,12 +26,15 @@ import androidx.navigation.navArgument
 import mx.edu.itson.potros.profecoconsumidor.ui.nav.Routes
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.comercios.ComercioDetalleScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.comercios.ComerciosScreen
+import mx.edu.itson.potros.profecoconsumidor.ui.screens.favoritos.MisFavoritosScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.home.HomeScreen
+import mx.edu.itson.potros.profecoconsumidor.ui.screens.listacompras.ListaComprasScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.ofertas.OfertasScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.perfil.PerfilScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.productos.ProductoDetalleScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.productos.ProductosScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.reportar.ReportarScreen
+import mx.edu.itson.potros.profecoconsumidor.ui.screens.wishlist.MiWishlistScreen
 
 private data class BottomItem(val label: String, val icon: ImageVector, val route: String, val baseRoute: String)
 
@@ -81,7 +84,10 @@ fun ProfecoApp() {
                     onBuscar = { q -> nav.navigate(Routes.productos(query = q)) },
                     onVerOfertas = { nav.navigate(Routes.OFERTAS) },
                     onVerProductos = { nav.navigate(Routes.productos()) },
-                    onVerComercios = { nav.navigate(Routes.COMERCIOS) }
+                    onVerComercios = { nav.navigate(Routes.COMERCIOS) },
+                    onVerFavoritos = { nav.navigate(Routes.MIS_FAVORITOS) },
+                    onVerWishlist = { nav.navigate(Routes.MI_WISHLIST) },
+                    onVerListaCompras = { nav.navigate(Routes.LISTA_COMPRAS) }
                 )
             }
 
@@ -137,7 +143,25 @@ fun ProfecoApp() {
                 ReportarScreen(comercioIdInicial = cid)
             }
 
-            composable(Routes.PERFIL) { PerfilScreen() }
+            composable(Routes.PERFIL) {
+                PerfilScreen(
+                    onVerFavoritos = { nav.navigate(Routes.MIS_FAVORITOS) },
+                    onVerWishlist = { nav.navigate(Routes.MI_WISHLIST) },
+                    onVerListaCompras = { nav.navigate(Routes.LISTA_COMPRAS) }
+                )
+            }
+
+            composable(Routes.MIS_FAVORITOS) {
+                MisFavoritosScreen(onAbrirComercio = { id -> nav.navigate(Routes.comercioDetalle(id)) })
+            }
+
+            composable(Routes.MI_WISHLIST) {
+                MiWishlistScreen(onAbrirProducto = { id -> nav.navigate(Routes.productoDetalle(id)) })
+            }
+
+            composable(Routes.LISTA_COMPRAS) {
+                ListaComprasScreen()
+            }
         }
     }
 }
