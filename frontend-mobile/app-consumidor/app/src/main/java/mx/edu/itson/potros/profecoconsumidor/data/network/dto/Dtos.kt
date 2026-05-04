@@ -146,3 +146,49 @@ data class RegistrarUsuarioRequest(
     val telefono: String,
     val tipo_usuario: String = "CONSUMIDOR"
 )
+
+// =============== Sync del consumidor con el backend ===============
+
+@Serializable
+data class RegistrarFcmTokenRequest(
+    val usuario_id: Long,
+    val token: String,
+    val plataforma: String = "ANDROID"
+)
+
+@Serializable
+data class MensajeResponseDto(
+    val mensaje: String = "",
+    val exito: Boolean = false
+)
+
+@Serializable
+data class SyncIdsRequest(
+    val usuario_id: Long,
+    val ids: List<Long>
+)
+
+@Serializable
+data class ListaIdsResponseDto(
+    val usuarioId: Long = 0,
+    val ids: List<Long> = emptyList()
+)
+
+@Serializable
+data class ItemListaComprasDto(
+    val idLocal: Int = 0,
+    val nombre: String = "",
+    val marcado: Boolean = false
+)
+
+@Serializable
+data class SyncListaComprasRequest(
+    val usuario_id: Long,
+    val items: List<ItemListaComprasDto>
+)
+
+@Serializable
+data class ListaItemsComprasResponseDto(
+    val usuarioId: Long = 0,
+    val items: List<ItemListaComprasDto> = emptyList()
+)

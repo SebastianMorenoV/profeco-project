@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.ProfecoConsumidor" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+        Tema "lanzador" basado en SplashScreen API.
+        Why: muestra el ícono de la app sobre fondo morado mientras Compose inicializa.
+        How to apply: AndroidManifest sigue apuntando a Theme.ProfecoConsumidor;
+        installSplashScreen() en MainActivity hace el handoff a postSplashScreenTheme.
+    -->
+    <style name="Theme.ProfecoConsumidor" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/profeco_purple</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.ProfecoConsumidor.Main</item>
+    </style>
+
+    <style name="Theme.ProfecoConsumidor.Main" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

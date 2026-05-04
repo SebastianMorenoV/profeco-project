@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,6 +36,7 @@ import mx.edu.itson.potros.profecoconsumidor.ui.components.Chip
 import mx.edu.itson.potros.profecoconsumidor.ui.components.EmptyState
 import mx.edu.itson.potros.profecoconsumidor.ui.components.ErrorBox
 import mx.edu.itson.potros.profecoconsumidor.ui.components.Loader
+import mx.edu.itson.potros.profecoconsumidor.ui.components.RefreshableLista
 import mx.edu.itson.potros.profecoconsumidor.util.CATEGORIAS
 
 @Composable
@@ -47,10 +49,20 @@ fun ProductosScreen(
     val state by vm.productos.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf(queryInicial) }
     var categoria by remember { mutableStateOf(categoriaInicial) }
+    var refrescando by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { vm.buscar(queryInicial, categoriaInicial) }
+    LaunchedEffect(state) { if (state !is UiState.Loading) refrescando = false }
 
+    RefreshableLista(
+        refrescando = refrescando,
+        onRefresh = {
+            refrescando = true
+            vm.buscar(query, categoria)
+        }
+    ) {
     LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -102,7 +114,7 @@ fun ProductosScreen(
         }
 
         when (val s = state) {
-            is UiState.Loading -> item { Loader() }
+            is UiState.Loading -> if (!refrescando) item { Loader() }
             is UiState.Error -> item { ErrorBox(s.message) }
             is UiState.Success -> {
                 if (s.data.isEmpty()) {
@@ -114,6 +126,7 @@ fun ProductosScreen(
                 }
             }
         }
+    }
     }
 }
 

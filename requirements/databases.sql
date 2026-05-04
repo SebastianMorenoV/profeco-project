@@ -26,6 +26,42 @@ INSERT INTO usuarios (nombre, apellido, email, telefono, tipo_usuario) VALUES
 ('Ana', 'Martínez', 'ana.martinez@comercio.com', '6442223344', 'COMERCIANTE'),
 ('Roberto', 'Hernández', 'roberto.hdz@profeco.gob.mx', '6443334455', 'PROFECO');
 
+-- Tablas auxiliares del consumidor móvil (sincronizadas con el backend)
+CREATE TABLE IF NOT EXISTS fcm_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    plataforma VARCHAR(16),
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_fcm_token (token),
+    INDEX idx_fcm_usuario (usuario_id)
+);
+
+CREATE TABLE IF NOT EXISTS comercios_favoritos (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT NOT NULL,
+    comercio_id BIGINT NOT NULL,
+    UNIQUE KEY uk_usuario_comercio (usuario_id, comercio_id),
+    INDEX idx_fav_comercio (comercio_id)
+);
+
+CREATE TABLE IF NOT EXISTS wishlist_productos (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT NOT NULL,
+    producto_id BIGINT NOT NULL,
+    UNIQUE KEY uk_usuario_producto (usuario_id, producto_id),
+    INDEX idx_wl_usuario (usuario_id)
+);
+
+CREATE TABLE IF NOT EXISTS lista_compras (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BIGINT NOT NULL,
+    id_local INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    marcado BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE KEY uk_usuario_item_local (usuario_id, id_local)
+);
+
 -- =============================================
 
 -- 2. BASE DE DATOS: COMERCIO

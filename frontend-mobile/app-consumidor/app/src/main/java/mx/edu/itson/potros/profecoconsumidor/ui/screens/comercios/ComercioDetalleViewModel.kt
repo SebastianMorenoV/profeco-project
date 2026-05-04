@@ -16,6 +16,7 @@ import mx.edu.itson.potros.profecoconsumidor.data.network.dto.OfertaDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.PromedioDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ReseniaDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 data class ComercioDetalleData(
     val comercio: ComercioDto?,
@@ -51,7 +52,7 @@ class ComercioDetalleViewModel : ViewModel() {
                 val ofertas = ServiceLocator.ofertas.listarPorComercio(id)
                 UiState.Success(ComercioDetalleData(comercio, promedio, resenias, ofertas))
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudo cargar el comercio")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudo cargar el comercio"))
             }
         }
     }
@@ -65,7 +66,7 @@ class ComercioDetalleViewModel : ViewModel() {
                 ServiceLocator.resenias.crear(usuarioId, id, calificacion, comentario)
                 recargarConMensaje(id, "Reseña publicada. Gracias por tu aporte.")
             } catch (t: Throwable) {
-                _state.value = UiState.Error(t.message ?: "No se pudo publicar la reseña")
+                _state.value = UiState.Error(ApiErrorMapper.map(t, "No se pudo publicar la reseña"))
             }
         }
     }

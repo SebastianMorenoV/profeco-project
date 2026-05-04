@@ -24,6 +24,20 @@ data class ItemCompra(
 class UserPrefs(private val context: Context) {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private var remoteSync: ((SyncEvent) -> Unit)? = null
+
+    /**
+     * Permite a ServiceLocator inyectar el callback de sync remoto.
+     * Why: UserPrefs no debe conocer ApiClient/Repositorios directamente para evitar dependencia circular.
+     * How to apply: ServiceLocator llama a setRemoteSync tras inicializar.
+     */
+    fun setRemoteSync(listener: (SyncEvent) -> Unit) {
+        remoteSync = listener
+    }
+
+    private fun emit(event: SyncEvent) {
+        remoteSync?.invoke(event)
+    }
 
     val state: Flow<UserPrefsState> = context.dataStore.data.map { p ->
         UserPrefsState(
@@ -55,7 +69,8 @@ class UserPrefs(private val context: Context) {
     suspend fun setBaseUrl(url: String) =
         context.dataStore.edit { it[KEY_BASE_URL] = url.ifBlank { DEFAULT_BASE_URL } }
 
-    suspend fun toggleComercioFavorito(comercioId: Long) =
+    suspend fun toggleComercioFavorito(comercioId: Long) {
+        var nuevoSet: Set<Long> = emptySet()
         context.dataStore.edit { p ->
             val actuales = p[KEY_FAV_COMERCIOS]
                 ?.split(",")
@@ -64,9 +79,13 @@ class UserPrefs(private val context: Context) {
                 ?: mutableSetOf()
             if (!actuales.add(comercioId)) actuales.remove(comercioId)
             p[KEY_FAV_COMERCIOS] = actuales.joinToString(",")
+            nuevoSet = actuales
         }
+        emit(SyncEvent.Favoritos(nuevoSet))
+    }
 
-    suspend fun toggleProductoWishlist(productoId: Long) =
+    suspend fun toggleProductoWishlist(productoId: Long) {
+        var nuevoSet: Set<Long> = emptySet()
         context.dataStore.edit { p ->
             val actuales = p[KEY_WISHLIST]
                 ?.split(",")
@@ -75,7 +94,10 @@ class UserPrefs(private val context: Context) {
                 ?: mutableSetOf()
             if (!actuales.add(productoId)) actuales.remove(productoId)
             p[KEY_WISHLIST] = actuales.joinToString(",")
+            nuevoSet = actuales
         }
+        emit(SyncEvent.Wishlist(nuevoSet))
+    }
 
     suspend fun marcarPushRecibido() =
         context.dataStore.edit { it[KEY_RECIBIO_PUSHES] = true }
@@ -103,15 +125,19 @@ class UserPrefs(private val context: Context) {
     suspend fun agregarItemListaCompras(nombre: String) {
         val limpio = nombre.trim()
         if (limpio.isEmpty()) return
+        var resultado: List<ItemCompra> = emptyList()
         context.dataStore.edit { p ->
             val items = decodeListaCompras(p[KEY_LISTA_COMPRAS]).toMutableList()
             val nuevoId = (items.maxOfOrNull { it.id } ?: 0) + 1
             items.add(ItemCompra(nuevoId, limpio, marcado = false))
             p[KEY_LISTA_COMPRAS] = encodeListaCompras(items)
+            resultado = items
         }
+        emit(SyncEvent.ListaCompras(resultado))
     }
 
-    suspend fun toggleItemListaCompras(id: Int) =
+    suspend fun toggleItemListaCompras(id: Int) {
+        var resultado: List<ItemCompra> = emptyList()
         context.dataStore.edit { p ->
             val items = decodeListaCompras(p[KEY_LISTA_COMPRAS]).toMutableList()
             val idx = items.indexOfFirst { it.id == id }
@@ -119,16 +145,25 @@ class UserPrefs(private val context: Context) {
                 items[idx] = items[idx].copy(marcado = !items[idx].marcado)
                 p[KEY_LISTA_COMPRAS] = encodeListaCompras(items)
             }
+            resultado = items
         }
+        emit(SyncEvent.ListaCompras(resultado))
+    }
 
-    suspend fun eliminarItemListaCompras(id: Int) =
+    suspend fun eliminarItemListaCompras(id: Int) {
+        var resultado: List<ItemCompra> = emptyList()
         context.dataStore.edit { p ->
             val items = decodeListaCompras(p[KEY_LISTA_COMPRAS]).filter { it.id != id }
             p[KEY_LISTA_COMPRAS] = encodeListaCompras(items)
+            resultado = items
         }
+        emit(SyncEvent.ListaCompras(resultado))
+    }
 
-    suspend fun limpiarListaCompras() =
+    suspend fun limpiarListaCompras() {
         context.dataStore.edit { it.remove(KEY_LISTA_COMPRAS) }
+        emit(SyncEvent.ListaCompras(emptyList()))
+    }
 
     private fun encodeListaCompras(items: List<ItemCompra>): String =
         json.encodeToString(ListSerializer(ItemCompra.serializer()), items)
@@ -162,3 +197,10 @@ data class UserPrefsState(
     val listaCompras: List<ItemCompra> = emptyList(),
     val recibioPushes: Boolean = false
 )
+
+/** Evento de sincronización: UserPrefs lo emite tras tocar local; ServiceLocator lo cablea al backend. */
+sealed interface SyncEvent {
+    data class Favoritos(val ids: Set<Long>) : SyncEvent
+    data class Wishlist(val ids: Set<Long>) : SyncEvent
+    data class ListaCompras(val items: List<ItemCompra>) : SyncEvent
+}

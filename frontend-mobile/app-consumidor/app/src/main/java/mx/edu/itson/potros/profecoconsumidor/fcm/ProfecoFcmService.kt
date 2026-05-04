@@ -7,12 +7,13 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import mx.edu.itson.potros.profecoconsumidor.R
+import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 
 class ProfecoFcmService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Log.d(TAG, "FCM token = $token")
-        // TODO: cuando exista POST /api/usuarios/{id}/fcm-token, mandar el token aquí.
+        ServiceLocator.registrarFcmToken(token)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

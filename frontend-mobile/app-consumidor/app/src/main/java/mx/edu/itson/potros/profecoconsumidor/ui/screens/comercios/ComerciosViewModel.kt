@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ComercioDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 class ComerciosViewModel : ViewModel() {
 
@@ -26,7 +27,7 @@ class ComerciosViewModel : ViewModel() {
             _comercios.value = try {
                 UiState.Success(ServiceLocator.comercios.listar())
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudieron cargar los comercios")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudieron cargar los comercios"))
             }
         }
     }
@@ -40,7 +41,7 @@ class ComerciosViewModel : ViewModel() {
                 if (query.isBlank()) UiState.Success(ServiceLocator.comercios.listar())
                 else UiState.Success(ServiceLocator.comercios.buscar(query))
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudieron cargar los comercios")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudieron cargar los comercios"))
             }
         }
     }

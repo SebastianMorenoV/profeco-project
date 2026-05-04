@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ReporteDto
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 data class ReportarUi(
     val enviando: Boolean = false,
@@ -34,7 +35,7 @@ class ReportarViewModel : ViewModel() {
                 cargarMisReportes()
             } catch (t: Throwable) {
                 _ui.update {
-                    it.copy(enviando = false, errorMensaje = t.message ?: "No se pudo enviar el reporte")
+                    it.copy(enviando = false, errorMensaje = ApiErrorMapper.map(t, "No se pudo enviar el reporte"))
                 }
             }
         }

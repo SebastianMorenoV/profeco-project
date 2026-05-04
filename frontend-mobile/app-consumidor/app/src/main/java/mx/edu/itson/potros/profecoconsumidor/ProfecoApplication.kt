@@ -13,6 +13,11 @@ class ProfecoApplication : Application() {
         ServiceLocator.init(this)
         crearCanalNotificaciones()
         FirebaseMessaging.getInstance().subscribeToTopic("ofertas-nuevas")
+        // Reenviar el token FCM actual al backend en cada arranque por si onNewToken
+        // ya disparó antes de que el endpoint existiera o antes de que el usuario tuviera id.
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            if (!token.isNullOrBlank()) ServiceLocator.registrarFcmToken(token)
+        }
     }
 
     private fun crearCanalNotificaciones() {

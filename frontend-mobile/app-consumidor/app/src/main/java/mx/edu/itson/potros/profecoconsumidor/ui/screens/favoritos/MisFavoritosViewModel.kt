@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ComercioDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 class MisFavoritosViewModel : ViewModel() {
 
@@ -28,7 +29,7 @@ class MisFavoritosViewModel : ViewModel() {
                 }
                 UiState.Success(comercios)
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudieron cargar los favoritos")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudieron cargar los favoritos"))
             }
         }
     }

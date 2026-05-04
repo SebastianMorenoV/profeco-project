@@ -12,13 +12,20 @@ import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ListaReseniasRespo
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.OfertaResponse
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ProductoResponse
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.PromedioDto
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ListaIdsResponseDto
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ListaItemsComprasResponseDto
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.MensajeResponseDto
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarFcmTokenRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarUsuarioRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ReporteResponse
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ReseniaResponse
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.SyncIdsRequest
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.SyncListaComprasRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.UsuarioResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -89,4 +96,39 @@ interface UsuariosApi {
 
     @GET("/api/usuarios/email/{email}")
     suspend fun buscarPorEmail(@Path("email") email: String): UsuarioResponse
+
+    // ===== Sincronización del consumidor móvil =====
+
+    @POST("/api/usuarios/{id}/fcm-token")
+    suspend fun registrarFcmToken(
+        @Path("id") usuarioId: Long,
+        @Body body: RegistrarFcmTokenRequest
+    ): MensajeResponseDto
+
+    @GET("/api/usuarios/{id}/comercios-favoritos")
+    suspend fun obtenerComerciosFavoritos(@Path("id") usuarioId: Long): ListaIdsResponseDto
+
+    @PUT("/api/usuarios/{id}/comercios-favoritos")
+    suspend fun syncComerciosFavoritos(
+        @Path("id") usuarioId: Long,
+        @Body body: SyncIdsRequest
+    ): ListaIdsResponseDto
+
+    @GET("/api/usuarios/{id}/wishlist")
+    suspend fun obtenerWishlist(@Path("id") usuarioId: Long): ListaIdsResponseDto
+
+    @PUT("/api/usuarios/{id}/wishlist")
+    suspend fun syncWishlist(
+        @Path("id") usuarioId: Long,
+        @Body body: SyncIdsRequest
+    ): ListaIdsResponseDto
+
+    @GET("/api/usuarios/{id}/lista-compras")
+    suspend fun obtenerListaCompras(@Path("id") usuarioId: Long): ListaItemsComprasResponseDto
+
+    @PUT("/api/usuarios/{id}/lista-compras")
+    suspend fun syncListaCompras(
+        @Path("id") usuarioId: Long,
+        @Body body: SyncListaComprasRequest
+    ): ListaItemsComprasResponseDto
 }

@@ -1,5 +1,7 @@
 package mx.edu.itson.potros.profecoconsumidor.ui
 
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
+
 sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
     data class Success<T>(val data: T) : UiState<T>
@@ -9,5 +11,5 @@ sealed interface UiState<out T> {
 inline fun <T> runCatchingUi(block: () -> T): UiState<T> = try {
     UiState.Success(block())
 } catch (t: Throwable) {
-    UiState.Error(t.message ?: "Error desconocido")
+    UiState.Error(ApiErrorMapper.map(t))
 }

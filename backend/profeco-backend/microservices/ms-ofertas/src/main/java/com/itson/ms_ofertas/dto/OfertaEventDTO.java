@@ -1,6 +1,7 @@
 package com.itson.ms_ofertas.dto;
 
 public class OfertaEventDTO {
+    private Long comercioId;
     private String titulo;
     private String descripcion;
     private Double precioOriginal;
@@ -9,7 +10,8 @@ public class OfertaEventDTO {
 
     public OfertaEventDTO() {}
 
-    public OfertaEventDTO(String titulo, String descripcion, Double precioOriginal, Double precioOferta, Double porcentajeDescuento) {
+    public OfertaEventDTO(Long comercioId, String titulo, String descripcion, Double precioOriginal, Double precioOferta, Double porcentajeDescuento) {
+        this.comercioId = comercioId;
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.precioOriginal = precioOriginal;
@@ -18,6 +20,7 @@ public class OfertaEventDTO {
     }
 
     // Getters
+    public Long getComercioId() { return comercioId; }
     public String getTitulo() { return titulo; }
     public String getDescripcion() { return descripcion; }
     public Double getPrecioOriginal() { return precioOriginal; }
@@ -25,6 +28,7 @@ public class OfertaEventDTO {
     public Double getPorcentajeDescuento() { return porcentajeDescuento; }
 
     // Setters
+    public void setComercioId(Long comercioId) { this.comercioId = comercioId; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     public void setPrecioOriginal(Double precioOriginal) { this.precioOriginal = precioOriginal; }

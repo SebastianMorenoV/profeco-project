@@ -56,6 +56,63 @@ service UsuariosService {
       get: "/api/usuarios/email/{email}"
     };
   }
+
+  // ===== FCM TOKENS =====
+  // Registra el token FCM de un dispositivo del usuario.
+  rpc RegistrarFcmToken(RegistrarFcmTokenRequest) returns (MensajeResponse) {
+    option (google.api.http) = {
+      post: "/api/usuarios/{usuario_id}/fcm-token"
+      body: "*"
+    };
+  }
+
+  // Llamado por el servicio de notificaciones para resolver a quién mandar push
+  // cuando un comercio publica una oferta. Devuelve los tokens de los usuarios
+  // que tienen ese comercio en favoritos.
+  rpc ListarFcmTokensPorComercio(IdRequest) returns (ListaTokensResponse) {}
+
+  // ===== COMERCIOS FAVORITOS =====
+  rpc ListarComerciosFavoritos(IdRequest) returns (ListaIdsResponse) {
+    option (google.api.http) = {
+      get: "/api/usuarios/{id}/comercios-favoritos"
+    };
+  }
+
+  // Reemplaza el set completo de comercios favoritos del usuario.
+  rpc SyncComerciosFavoritos(SyncIdsRequest) returns (ListaIdsResponse) {
+    option (google.api.http) = {
+      put: "/api/usuarios/{usuario_id}/comercios-favoritos"
+      body: "*"
+    };
+  }
+
+  // ===== WISHLIST DE PRODUCTOS =====
+  rpc ListarWishlist(IdRequest) returns (ListaIdsResponse) {
+    option (google.api.http) = {
+      get: "/api/usuarios/{id}/wishlist"
+    };
+  }
+
+  rpc SyncWishlist(SyncIdsRequest) returns (ListaIdsResponse) {
+    option (google.api.http) = {
+      put: "/api/usuarios/{usuario_id}/wishlist"
+      body: "*"
+    };
+  }
+
+  // ===== LISTA DE COMPRAS =====
+  rpc ListarListaCompras(IdRequest) returns (ListaItemsComprasResponse) {
+    option (google.api.http) = {
+      get: "/api/usuarios/{id}/lista-compras"
+    };
+  }
+
+  rpc SyncListaCompras(SyncListaComprasRequest) returns (ListaItemsComprasResponse) {
+    option (google.api.http) = {
+      put: "/api/usuarios/{usuario_id}/lista-compras"
+      body: "*"
+    };
+  }
 }
 
 // =============================================
@@ -117,4 +174,46 @@ message UsuarioResponse {
 
 message ListaUsuariosResponse {
   repeated Usuario usuarios = 1;
+}
+
+// ===== FCM =====
+
+message RegistrarFcmTokenRequest {
+  int64 usuario_id = 1;
+  string token = 2;
+  string plataforma = 3; // ANDROID / IOS / WEB
+}
+
+message ListaTokensResponse {
+  repeated string tokens = 1;
+}
+
+// ===== Sync de listas de IDs (favoritos / wishlist) =====
+
+message SyncIdsRequest {
+  int64 usuario_id = 1;
+  repeated int64 ids = 2;
+}
+
+message ListaIdsResponse {
+  int64 usuario_id = 1;
+  repeated int64 ids = 2;
+}
+
+// ===== Lista de compras =====
+
+message ItemListaCompras {
+  int32 id_local = 1;
+  string nombre = 2;
+  bool marcado = 3;
+}
+
+message SyncListaComprasRequest {
+  int64 usuario_id = 1;
+  repeated ItemListaCompras items = 2;
+}
+
+message ListaItemsComprasResponse {
+  int64 usuario_id = 1;
+  repeated ItemListaCompras items = 2;
 }

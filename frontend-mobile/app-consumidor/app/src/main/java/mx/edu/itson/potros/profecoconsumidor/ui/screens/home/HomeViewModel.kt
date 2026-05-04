@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.OfertaDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 class HomeViewModel : ViewModel() {
 
@@ -26,7 +27,7 @@ class HomeViewModel : ViewModel() {
             _ofertas.value = try {
                 UiState.Success(ServiceLocator.ofertas.listar(soloActivas = true))
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudieron cargar las ofertas")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudieron cargar las ofertas"))
             }
         }
     }

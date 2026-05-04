@@ -48,6 +48,7 @@ public class OfertasGrpcServiceImpl extends OfertasServiceGrpc.OfertasServiceImp
         // Enviar evento a RabbitMQ
         try {
             OfertaEventDTO evento = new OfertaEventDTO(
+                    saved.getComercioId(),
                     saved.getTitulo(),
                     saved.getDescripcion(),
                     saved.getPrecioOriginal().doubleValue(),

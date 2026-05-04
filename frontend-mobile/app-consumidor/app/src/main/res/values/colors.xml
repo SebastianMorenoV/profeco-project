@@ -7,4 +7,9 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Branding PROFECO consumidor móvil -->
+    <color name="profeco_purple">#FF5B2A86</color>
+    <color name="profeco_purple_dark">#FF3F1D5E</color>
+    <color name="profeco_white">#FFFFFFFF</color>
 </resources>

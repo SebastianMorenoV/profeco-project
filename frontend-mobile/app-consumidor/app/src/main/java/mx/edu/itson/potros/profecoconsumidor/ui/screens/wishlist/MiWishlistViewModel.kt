@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ProductoDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 class MiWishlistViewModel : ViewModel() {
 
@@ -28,7 +29,7 @@ class MiWishlistViewModel : ViewModel() {
                 }
                 UiState.Success(productos)
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudo cargar la wishlist")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudo cargar la wishlist"))
             }
         }
     }

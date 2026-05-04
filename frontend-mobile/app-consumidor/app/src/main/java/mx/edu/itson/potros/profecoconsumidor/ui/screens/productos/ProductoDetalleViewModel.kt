@@ -14,6 +14,7 @@ import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ComercioDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.PrecioDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ProductoDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 data class ProductoDetalleData(
     val producto: ProductoDto?,
@@ -46,7 +47,7 @@ class ProductoDetalleViewModel : ViewModel() {
                 }.mapNotNull { (k, v) -> v?.let { k to it } }.toMap()
                 UiState.Success(ProductoDetalleData(producto, precios, mapa))
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudo cargar el producto")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudo cargar el producto"))
             }
         }
     }

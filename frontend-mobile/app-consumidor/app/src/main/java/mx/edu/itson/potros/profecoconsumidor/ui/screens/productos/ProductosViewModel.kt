@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ProductoDto
 import mx.edu.itson.potros.profecoconsumidor.ui.UiState
+import mx.edu.itson.potros.profecoconsumidor.util.ApiErrorMapper
 
 class ProductosViewModel : ViewModel() {
 
@@ -31,7 +32,7 @@ class ProductosViewModel : ViewModel() {
                 }
                 UiState.Success(resultados)
             } catch (t: Throwable) {
-                UiState.Error(t.message ?: "No se pudieron cargar los productos")
+                UiState.Error(ApiErrorMapper.map(t, "No se pudieron cargar los productos"))
             }
         }
     }

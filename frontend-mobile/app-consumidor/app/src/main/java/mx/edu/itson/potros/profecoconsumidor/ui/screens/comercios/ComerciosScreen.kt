@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,6 +33,7 @@ import mx.edu.itson.potros.profecoconsumidor.ui.components.Chip
 import mx.edu.itson.potros.profecoconsumidor.ui.components.EmptyState
 import mx.edu.itson.potros.profecoconsumidor.ui.components.ErrorBox
 import mx.edu.itson.potros.profecoconsumidor.ui.components.Loader
+import mx.edu.itson.potros.profecoconsumidor.ui.components.RefreshableLista
 
 @Composable
 fun ComerciosScreen(
@@ -40,10 +42,20 @@ fun ComerciosScreen(
 ) {
     val state by vm.comercios.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
+    var refrescando by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { vm.cargar() }
+    LaunchedEffect(state) { if (state !is UiState.Loading) refrescando = false }
 
+    RefreshableLista(
+        refrescando = refrescando,
+        onRefresh = {
+            refrescando = true
+            if (query.isBlank()) vm.cargar() else vm.buscar(query)
+        }
+    ) {
     LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -71,7 +83,7 @@ fun ComerciosScreen(
         }
 
         when (val s = state) {
-            is UiState.Loading -> item { Loader() }
+            is UiState.Loading -> if (!refrescando) item { Loader() }
             is UiState.Error -> item { ErrorBox(s.message) }
             is UiState.Success -> {
                 if (s.data.isEmpty()) {
@@ -83,6 +95,7 @@ fun ComerciosScreen(
                 }
             }
         }
+    }
     }
 }
 
