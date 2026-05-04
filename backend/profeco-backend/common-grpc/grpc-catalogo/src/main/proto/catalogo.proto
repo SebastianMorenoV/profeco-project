@@ -75,6 +75,12 @@ service CatalogoService {
       body: "*"
     };
   }
+
+  rpc ListarPreciosPorComercio(IdRequest) returns (ListaPreciosResponse) {
+    option (google.api.http) = {
+      get: "/api/catalogo/comercio/{id}/precios"
+    };
+  }
 }
 
 // =============================================

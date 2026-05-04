@@ -131,23 +131,24 @@ public class ComercioGrpcServiceImpl extends ComercioServiceGrpc.ComercioService
     }
 
     private com.mycompany.grpc.comercio.Comercio toProto(Comercio e) {
-        return com.mycompany.grpc.comercio.Comercio.newBuilder()
-                .setId(e.getId())
-                .setNombreComercial(e.getNombreComercial())
-                .setRazonSocial(e.getRazonSocial() != null ? e.getRazonSocial() : "")
-                .setRfc(e.getRfc() != null ? e.getRfc() : "")
-                .setDireccion(e.getDireccion())
-                .setCiudad(e.getCiudad())
-                .setEstado(e.getEstado())
-                .setCodigoPostal(e.getCodigoPostal() != null ? e.getCodigoPostal() : "")
-                .setTelefono(e.getTelefono() != null ? e.getTelefono() : "")
-                .setEmail(e.getEmail() != null ? e.getEmail() : "")
-                .setTipoComercio(e.getTipoComercio())
-                .setLatitud(e.getLatitud() != null ? e.getLatitud() : 0)
-                .setLongitud(e.getLongitud() != null ? e.getLongitud() : 0)
-                .setIdPropietario(e.getIdPropietario() != null ? e.getIdPropietario() : 0)
-                .setActivo(e.getActivo())
-                .setFechaRegistro(e.getFechaRegistro().toString())
-                .build();
-    }
+    return com.mycompany.grpc.comercio.Comercio.newBuilder()
+            .setId(e.getId())
+            .setNombreComercial(e.getNombreComercial() != null ? e.getNombreComercial() : "")
+            .setRazonSocial(e.getRazonSocial() != null ? e.getRazonSocial() : "")
+            .setRfc(e.getRfc() != null ? e.getRfc() : "")
+            .setDireccion(e.getDireccion() != null ? e.getDireccion() : "")
+            .setCiudad(e.getCiudad() != null ? e.getCiudad() : "")
+            .setEstado(e.getEstado() != null ? e.getEstado() : "")
+            .setCodigoPostal(e.getCodigoPostal() != null ? e.getCodigoPostal() : "")
+            .setTelefono(e.getTelefono() != null ? e.getTelefono() : "")
+            .setEmail(e.getEmail() != null ? e.getEmail() : "")
+            .setTipoComercio(e.getTipoComercio() != null ? e.getTipoComercio() : "")
+            .setLatitud(e.getLatitud() != null ? e.getLatitud() : 0.0)
+            .setLongitud(e.getLongitud() != null ? e.getLongitud() : 0.0)
+            .setIdPropietario(e.getIdPropietario() != null ? e.getIdPropietario() : 0)
+            .setActivo(e.getActivo() != null ? e.getActivo() : true)
+
+            .setFechaRegistro(e.getFechaRegistro() != null ? e.getFechaRegistro().toString() : "")
+            .build();
+}
 }
