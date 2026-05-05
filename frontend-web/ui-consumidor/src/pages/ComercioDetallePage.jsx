@@ -5,10 +5,14 @@ import { useFetch } from '../hooks/useFetch';
 import { Loader, ErrorBox, EmptyState } from '../components/Loader';
 import { StarRating } from '../components/StarRating';
 import { formatDate, formatMXN } from '../utils/format';
+import { useUser } from '../context/UserContext';
 
 export function ComercioDetallePage() {
   const { id } = useParams();
   const comercioId = Number(id);
+
+  const { usuarioId, favoritos, toggleFavorito } = useUser();
+  const esFavorito = favoritos.includes(comercioId);
 
   const comercio = useFetch(() => comerciosApi.obtener(comercioId), [comercioId]);
   const promedio = useFetch(() => reseniasApi.obtenerPromedio(comercioId), [comercioId]);
@@ -17,7 +21,6 @@ export function ComercioDetallePage() {
 
   const [calificacion, setCalificacion] = useState(5);
   const [comentario, setComentario] = useState('');
-  const [usuarioId, setUsuarioId] = useState(1);
   const [enviando, setEnviando] = useState(false);
   const [okMsg, setOkMsg] = useState(null);
   const [errMsg, setErrMsg] = useState(null);
@@ -74,6 +77,19 @@ export function ComercioDetallePage() {
         ) : (
           <p className="muted">Aún no hay reseñas para este comercio.</p>
         )}
+
+        <div className="card-actions">
+          <button
+            type="button"
+            className={`btn-fav${esFavorito ? ' on' : ''}`}
+            onClick={() => toggleFavorito(comercioId)}
+          >
+            {esFavorito ? '★ Favorito' : '☆ Marcar favorito'}
+          </button>
+          <Link to={`/reportar?comercioId=${comercioId}`} className="btn-secondary">
+            Reportar inconsistencia
+          </Link>
+        </div>
       </div>
 
       <section>
@@ -125,18 +141,10 @@ export function ComercioDetallePage() {
 
         <form className="card resenia-form" onSubmit={enviarResenia}>
           <h3>Deja tu reseña</h3>
+          <p className="muted small">Publicas como usuario #{usuarioId}. Cámbialo desde <Link to="/perfil">Mi cuenta</Link>.</p>
           <label>
             Tu calificación
             <StarRating value={calificacion} size={26} onChange={setCalificacion} />
-          </label>
-          <label>
-            ID de usuario
-            <input
-              type="number"
-              min={1}
-              value={usuarioId}
-              onChange={(e) => setUsuarioId(Number(e.target.value))}
-            />
           </label>
           <label>
             Comentario

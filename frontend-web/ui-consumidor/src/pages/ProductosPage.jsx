@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { catalogoApi, CATEGORIAS } from '../api';
 import { useFetch } from '../hooks/useFetch';
 import { Loader, ErrorBox, EmptyState } from '../components/Loader';
+import { useUser } from '../context/UserContext';
 
 export function ProductosPage() {
   const [params, setParams] = useSearchParams();
@@ -12,10 +13,19 @@ export function ProductosPage() {
   const [q, setQ] = useState(initialQ);
   const [categoria, setCategoria] = useState(initialCat);
 
+  const { wishlist, toggleWishlist, registrarBusqueda } = useUser();
+
   const { data, loading, error } = useFetch(
     () => catalogoApi.buscarProductos(initialQ || undefined, initialCat || undefined),
     [initialQ, initialCat]
   );
+
+  useEffect(() => {
+    if (initialQ && Array.isArray(data) && data.length > 0) {
+      registrarBusqueda(initialQ);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQ, data]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -24,6 +34,8 @@ export function ProductosPage() {
     if (categoria) next.set('categoria', categoria);
     setParams(next);
   };
+
+  const enWishlist = (id) => wishlist.includes(Number(id));
 
   return (
     <div className="page">
@@ -59,13 +71,25 @@ export function ProductosPage() {
 
       <div className="grid grid-3">
         {(data ?? []).map((p) => (
-          <Link key={p.id} to={`/productos/${p.id}`} className="card producto">
+          <article key={p.id} className="card producto">
             <span className="chip">{p.categoria || 'SIN CATEGORÍA'}</span>
-            <h3>{p.nombre}</h3>
+            <h3>
+              <Link to={`/productos/${p.id}`}>{p.nombre}</Link>
+            </h3>
             <p className="muted">{p.marca}</p>
             <p className="line-clamp">{p.descripcion}</p>
-            <span className="link-more">Ver precios →</span>
-          </Link>
+            <div className="card-actions">
+              <Link to={`/productos/${p.id}`} className="link-more">Ver precios →</Link>
+              <button
+                type="button"
+                className={`btn-fav${enWishlist(p.id) ? ' on' : ''}`}
+                onClick={() => toggleWishlist(p.id)}
+                aria-label={enWishlist(p.id) ? 'Quitar de wishlist' : 'Agregar a wishlist'}
+              >
+                {enWishlist(p.id) ? '♥ En wishlist' : '♡ Wishlist'}
+              </button>
+            </div>
+          </article>
         ))}
       </div>
     </div>

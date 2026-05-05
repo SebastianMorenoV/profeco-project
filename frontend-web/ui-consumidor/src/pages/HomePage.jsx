@@ -4,17 +4,28 @@ import { ofertasApi } from '../api';
 import { useFetch } from '../hooks/useFetch';
 import { Loader, ErrorBox, EmptyState } from '../components/Loader';
 import { formatMXN } from '../utils/format';
+import { useUser } from '../context/UserContext';
 
 export function HomePage() {
   const nav = useNavigate();
   const [q, setQ] = useState('');
   const ofertas = useFetch(() => ofertasApi.listar(true), []);
+  const { busquedasRecientes, registrarBusqueda, favoritos, wishlist, listaCompras } = useUser();
 
   const submit = (e) => {
     e.preventDefault();
+    const limpio = q.trim();
     const params = new URLSearchParams();
-    if (q.trim()) params.set('q', q.trim());
+    if (limpio) {
+      params.set('q', limpio);
+      registrarBusqueda(limpio);
+    }
     nav(`/productos${params.toString() ? `?${params}` : ''}`);
+  };
+
+  const usarBusqueda = (texto) => {
+    registrarBusqueda(texto);
+    nav(`/productos?q=${encodeURIComponent(texto)}`);
   };
 
   const destacadas = (ofertas.data ?? []).slice(0, 3);
@@ -36,6 +47,47 @@ export function HomePage() {
           />
           <button type="submit">Buscar</button>
         </form>
+        {busquedasRecientes.length > 0 && (
+          <div className="hero-recientes">
+            <span className="muted small">Búsquedas recientes:</span>
+            <div className="chips-row">
+              {busquedasRecientes.map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  className="chip-action"
+                  onClick={() => usarBusqueda(b)}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mis-listas">
+        <div className="section-header">
+          <h2>Mis listas</h2>
+          <Link to="/perfil" className="link-more">Mi cuenta →</Link>
+        </div>
+        <div className="grid grid-3">
+          <Link to="/mis-favoritos" className="card mini-stat">
+            <span className="chip">Favoritos</span>
+            <strong>{favoritos.length}</strong>
+            <p className="muted">Comercios que sigues</p>
+          </Link>
+          <Link to="/mi-wishlist" className="card mini-stat">
+            <span className="chip">Wishlist</span>
+            <strong>{wishlist.length}</strong>
+            <p className="muted">Productos guardados</p>
+          </Link>
+          <Link to="/lista-compras" className="card mini-stat">
+            <span className="chip">Lista</span>
+            <strong>{listaCompras.length}</strong>
+            <p className="muted">Items por comprar</p>
+          </Link>
+        </div>
       </section>
 
       <section>
@@ -74,9 +126,9 @@ export function HomePage() {
           <h3>Comercios registrados</h3>
           <p>Califica y consulta reseñas de otros consumidores.</p>
         </Link>
-        <Link to="/ofertas" className="info-card">
-          <h3>Promociones vigentes</h3>
-          <p>Las mejores ofertas publicadas en tiempo real.</p>
+        <Link to="/reportar" className="info-card">
+          <h3>Reportar inconsistencia</h3>
+          <p>Denuncia precios excesivos o publicidad engañosa.</p>
         </Link>
       </section>
     </div>

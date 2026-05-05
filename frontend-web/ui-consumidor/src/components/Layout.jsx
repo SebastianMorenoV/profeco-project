@@ -16,6 +16,9 @@ export function Layout() {
             <NavLink to="/productos">Productos</NavLink>
             <NavLink to="/comercios">Comercios</NavLink>
             <NavLink to="/ofertas">Ofertas</NavLink>
+            <NavLink to="/reportar">Reportar</NavLink>
+            <NavLink to="/lista-compras">Lista</NavLink>
+            <NavLink to="/perfil" className="nav-cta">Mi cuenta</NavLink>
           </nav>
         </div>
       </header>

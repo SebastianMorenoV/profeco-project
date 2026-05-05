@@ -4,6 +4,7 @@ import { catalogoApi, comerciosApi } from '../api';
 import { useFetch } from '../hooks/useFetch';
 import { Loader, ErrorBox, EmptyState } from '../components/Loader';
 import { formatMXN, formatDate } from '../utils/format';
+import { useUser } from '../context/UserContext';
 
 export function ProductoDetallePage() {
   const { id } = useParams();
@@ -12,7 +13,11 @@ export function ProductoDetallePage() {
   const producto = useFetch(() => catalogoApi.obtenerProducto(productoId), [productoId]);
   const precios = useFetch(() => catalogoApi.obtenerPreciosProducto(productoId), [productoId]);
 
+  const { wishlist, toggleWishlist, agregarItemListaCompras } = useUser();
+  const enWishlist = wishlist.includes(productoId);
+
   const [comercios, setComercios] = useState({});
+  const [aviso, setAviso] = useState(null);
 
   useEffect(() => {
     if (!precios.data) return;
@@ -38,6 +43,12 @@ export function ProductoDetallePage() {
   const ordenados = [...(precios.data ?? [])].sort((a, b) => a.precio - b.precio);
   const mejor = ordenados[0];
 
+  const agregarALista = () => {
+    agregarItemListaCompras(producto.data.nombre);
+    setAviso(`“${producto.data.nombre}” se agregó a tu lista de compras.`);
+    setTimeout(() => setAviso(null), 2500);
+  };
+
   return (
     <div className="page">
       <Link to="/productos" className="link-back">← Volver al catálogo</Link>
@@ -50,6 +61,21 @@ export function ProductoDetallePage() {
         {producto.data.codigoBarras && (
           <p className="muted small">Código de barras: {producto.data.codigoBarras}</p>
         )}
+
+        <div className="card-actions">
+          <button
+            type="button"
+            className={`btn-fav${enWishlist ? ' on' : ''}`}
+            onClick={() => toggleWishlist(productoId)}
+          >
+            {enWishlist ? '♥ Guardado en wishlist' : '♡ Guardar en wishlist'}
+          </button>
+          <button type="button" className="btn-secondary" onClick={agregarALista}>
+            Agregar a mi lista de compras
+          </button>
+        </div>
+
+        {aviso && <div className="success-box" style={{ marginTop: '0.75rem' }}>{aviso}</div>}
       </div>
 
       <section>
