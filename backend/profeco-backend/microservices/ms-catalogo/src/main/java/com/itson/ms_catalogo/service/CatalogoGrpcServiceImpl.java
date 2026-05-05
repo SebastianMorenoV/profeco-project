@@ -71,26 +71,23 @@ public class CatalogoGrpcServiceImpl extends CatalogoServiceGrpc.CatalogoService
     @Override
     public void buscarProductos(BuscarProductosRequest request, StreamObserver<ListaProductosResponse> responseObserver) {
         String query = request.getQuery() == null ? "" : request.getQuery().trim();
-        String categoria = request.getCategoria() == null ? "" : request.getCategoria().trim();
-
         List<Producto> resultados;
 
-        if (!query.isEmpty() && !categoria.isEmpty()) {
-            resultados = productoRepo.findByNombreContainingIgnoreCaseAndCategoriaAndActivoTrue(query, categoria);
-        } else if (!query.isEmpty()) {
-            resultados = productoRepo.findByNombreContainingIgnoreCaseAndActivoTrue(query);
-        } else if (!categoria.isEmpty()) {
-            resultados = productoRepo.findByCategoriaAndActivoTrue(categoria);
+        if (query.isEmpty()) {
+            resultados = productoRepo.findAll();
         } else {
-            resultados = productoRepo.findByActivoTrue();
+            resultados = productoRepo.findByNombreContainingIgnoreCase(query); 
         }
 
         ListaProductosResponse.Builder builder = ListaProductosResponse.newBuilder();
+        //  Corregido a toProtoProducto
         resultados.forEach(p -> builder.addProductos(toProtoProducto(p)));
-
+        
         responseObserver.onNext(builder.build());
         responseObserver.onCompleted();
     }
+    
+    
 
     @Override
     public void actualizarProducto(ActualizarProductoRequest request, StreamObserver<ProductoResponse> responseObserver) {
@@ -141,21 +138,15 @@ public class CatalogoGrpcServiceImpl extends CatalogoServiceGrpc.CatalogoService
 
     @Override
     public void registrarPrecio(RegistrarPrecioRequest request, StreamObserver<PrecioResponse> responseObserver) {
-        // Upsert: si ya existe un precio para ese producto+comercio, actualizarlo
-        PrecioProducto entity = precioRepo
-                .findByProductoIdAndComercioId(request.getProductoId(), request.getComercioId())
-                .orElse(new PrecioProducto());
+        PrecioProducto nuevoPrecio = new PrecioProducto();
+        nuevoPrecio.setProductoId(request.getProductoId());
+        nuevoPrecio.setComercioId(request.getComercioId());
+        nuevoPrecio.setPrecio(BigDecimal.valueOf(request.getPrecio()));
 
-        entity.setProductoId(request.getProductoId());
-        entity.setComercioId(request.getComercioId());
-        entity.setPrecio(BigDecimal.valueOf(request.getPrecio()));
-        entity.setFechaReporte(java.time.LocalDateTime.now());
-
-        PrecioProducto saved = precioRepo.save(entity);
-
-        responseObserver.onNext(PrecioResponse.newBuilder()
-                .setPrecio(toProtoPrecio(saved))
-                .build());
+        PrecioProducto guardado = precioRepo.save(nuevoPrecio);
+        
+        // Corregido a toProtoPrecio
+        responseObserver.onNext(PrecioResponse.newBuilder().setPrecio(toProtoPrecio(guardado)).build());
         responseObserver.onCompleted();
     }
 
@@ -173,21 +164,29 @@ public class CatalogoGrpcServiceImpl extends CatalogoServiceGrpc.CatalogoService
     @Override
     public void actualizarPrecio(ActualizarPrecioRequest request, StreamObserver<PrecioResponse> responseObserver) {
         precioRepo.findById(request.getId()).ifPresentOrElse(
-                p -> {
-                    p.setPrecio(BigDecimal.valueOf(request.getPrecio()));
-                    p.setFechaReporte(java.time.LocalDateTime.now());
-                    PrecioProducto saved = precioRepo.save(p);
-                    responseObserver.onNext(PrecioResponse.newBuilder()
-                            .setPrecio(toProtoPrecio(saved))
-                            .build());
-                    responseObserver.onCompleted();
-                },
-                () -> {
-                    responseObserver.onError(io.grpc.Status.NOT_FOUND
-                            .withDescription("Precio no encontrado con ID: " + request.getId())
-                            .asRuntimeException());
-                }
+            precioExistente -> {
+                precioExistente.setPrecio(BigDecimal.valueOf(request.getPrecio()));
+                PrecioProducto actualizado = precioRepo.save(precioExistente);
+                
+                //  Corregido a toProtoPrecio
+                responseObserver.onNext(PrecioResponse.newBuilder().setPrecio(toProtoPrecio(actualizado)).build());
+                responseObserver.onCompleted();
+            },
+            () -> responseObserver.onError(io.grpc.Status.NOT_FOUND
+                    .withDescription("Precio no encontrado").asRuntimeException())
         );
+    }
+    
+    @Override
+    public void listarPreciosPorComercio(IdRequest request, StreamObserver<ListaPreciosResponse> responseObserver) {
+        List<PrecioProducto> resultados = precioRepo.findByComercioId(request.getId());
+
+        ListaPreciosResponse.Builder builder = ListaPreciosResponse.newBuilder();
+        // Corregido a toProtoPrecio
+        resultados.forEach(p -> builder.addPrecios(toProtoPrecio(p)));
+        
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
     }
 
     // ==================== MAPPERS ====================
@@ -202,7 +201,7 @@ public class CatalogoGrpcServiceImpl extends CatalogoServiceGrpc.CatalogoService
                 .setCodigoBarras(entity.getCodigoBarras() != null ? entity.getCodigoBarras() : "")
                 .setUnidadMedida(entity.getUnidadMedida() != null ? entity.getUnidadMedida() : "")
                 .setActivo(entity.getActivo())
-                .setFechaCreacion(entity.getFechaCreacion().toString())
+                .setFechaCreacion(entity.getFechaCreacion() != null ? entity.getFechaCreacion().toString() : "")
                 .build();
     }
 

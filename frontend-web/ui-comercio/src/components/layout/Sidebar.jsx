@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }) {
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
@@ -16,16 +16,31 @@ export default function Sidebar() {
         <Link to="/" style={{...styles.link, ...(isActive('/') ? styles.activeLink : {})}}>
            Dashboard
         </Link>
-        <Link to="/precios" style={{...styles.link, ...(isActive('/precios') ? styles.activeLink : {})}}>
+        <Link to="/registrar-precios" style={{...styles.link, ...(isActive('/registrar-precios') ? styles.activeLink : {})}}>
            Mis Precios
         </Link>
         <Link to="/ofertas" style={{...styles.link, ...(isActive('/ofertas') ? styles.activeLink : {})}}>
          Ofertas
         </Link>
+        <Link to="/resenias" style={{...styles.link, ...(isActive('/resenias') ? styles.activeLink : {})}}>
+         Comentarios y Calificaciones
+        </Link>
+        <Link to="/reportes" style={{...styles.link, ...(isActive('/reportes') ? styles.activeLink : {})}}>
+         Inconsistencias Reportadas
+        </Link>
+        <Link to="/multas" style={{...styles.link, ...(isActive('/multas') ? styles.activeLink : {})}}>
+         Multas de PROFECO
+        </Link>
         <Link to="/perfil" style={{...styles.link, ...(isActive('/perfil') ? styles.activeLink : {})}}>
          Mi Perfil
         </Link>
       </nav>
+
+      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid #f3f4f6' }}>
+        <button onClick={onLogout} style={styles.logoutBtn}>
+          Cerrar Sesión
+        </button>
+      </div>
     </aside>
   );
 }
@@ -78,5 +93,16 @@ const styles = {
     backgroundColor: '#f3f4f6',
     color: '#111827',
     fontWeight: '600',
+  },
+  logoutBtn: {
+    width: '100%',
+    padding: '0.75rem',
+    backgroundColor: '#fee2e2',
+    color: '#dc2626',
+    border: 'none',
+    borderRadius: '0.5rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
   }
 };

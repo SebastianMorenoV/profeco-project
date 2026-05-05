@@ -10,4 +10,7 @@ public interface PrecioProductoRepository extends JpaRepository<PrecioProducto, 
     List<PrecioProducto> findByProductoId(Long productoId);
 
     Optional<PrecioProducto> findByProductoIdAndComercioId(Long productoId, Long comercioId);
+    
+    List<PrecioProducto> findByComercioId(Long comercioId);
+    
 }

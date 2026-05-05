@@ -73,6 +73,15 @@ public class MultasGrpcServiceImpl extends MultasServiceGrpc.MultasServiceImplBa
     }
 
     @Override
+    public void listarReportesPorComercio(IdRequest request, StreamObserver<ListaReportesResponse> responseObserver) {
+        List<Reporte> resultados = reporteRepo.findByComercioId(request.getId());
+        ListaReportesResponse.Builder builder = ListaReportesResponse.newBuilder();
+        resultados.forEach(r -> builder.addReportes(toProtoReporte(r)));
+        responseObserver.onNext(builder.build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void listarReportes(ListarReportesRequest request, StreamObserver<ListaReportesResponse> responseObserver) {
         String estatus = request.getEstatus() == null ? "" : request.getEstatus().trim();
         List<Reporte> resultados = estatus.isEmpty()

@@ -42,6 +42,12 @@ service MultasService {
     };
   }
 
+  rpc ListarReportesPorComercio(IdRequest) returns (ListaReportesResponse) {
+    option (google.api.http) = {
+      get: "/api/reportes/comercio/{id}"
+    };
+  }
+
   rpc ListarReportes(ListarReportesRequest) returns (ListaReportesResponse) {
     option (google.api.http) = {
       get: "/api/reportes"

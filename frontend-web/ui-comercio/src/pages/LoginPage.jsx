@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { getPerfilComercio } from '../api/comercio';
 
 export default function LoginPage({ onLogin }) {
-  const [credenciales, setCredenciales] = useState({ correo: '', password: '' });
+  const [comercioId, setComercioId] = useState('');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
 
@@ -11,23 +12,24 @@ export default function LoginPage({ onLogin }) {
     setCargando(true);
 
     try {
-      // AQUÍ IRÍA LA LLAMADA A TU BACKEND (ms-usuarios)
-      // Ejemplo: const res = await loginComercio(credenciales);
-      
-      // Como aún no conectamos la API de usuarios, vamos a simular que el login fue exitoso 
-      // y le asignaremos el ID "1" al comercio para que el resto del sistema siga funcionando.
-      setTimeout(() => {
-        if (credenciales.correo && credenciales.password) {
-          const fakeComercio = { id: "1", nombre: "Mi Sucursal", token: "abc-123" };
-          onLogin(fakeComercio);
-        } else {
-          setError('Por favor llena todos los campos.');
-        }
+      if (!comercioId) {
+        setError('Por favor ingresa un ID de comercio.');
         setCargando(false);
-      }, 1000); // Simulamos 1 segundo de carga
+        return;
+      }
 
+      const res = await getPerfilComercio(comercioId);
+      
+      if (res.data && res.data.comercio) {
+        onLogin(res.data.comercio);
+      } else if (res.data && res.data.id) {
+        onLogin(res.data);
+      } else {
+        setError('No se pudo cargar la información del comercio.');
+      }
     } catch (err) {
-      setError('Credenciales incorrectas o error de conexión.');
+      setError('Comercio no encontrado o error de conexión.');
+    } finally {
       setCargando(false);
     }
   };
@@ -42,25 +44,13 @@ export default function LoginPage({ onLogin }) {
 
         <form onSubmit={handleSubmit}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Correo Electrónico</label>
+            <label style={styles.label}>ID del Comercio</label>
             <input 
-              type="email" 
+              type="number" 
               style={styles.input} 
-              placeholder="admin@misucursal.com"
-              value={credenciales.correo}
-              onChange={(e) => setCredenciales({...credenciales, correo: e.target.value})}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Contraseña</label>
-            <input 
-              type="password" 
-              style={styles.input} 
-              placeholder="••••••••"
-              value={credenciales.password}
-              onChange={(e) => setCredenciales({...credenciales, password: e.target.value})}
+              placeholder="Ej. 1"
+              value={comercioId}
+              onChange={(e) => setComercioId(e.target.value)}
               required
             />
           </div>

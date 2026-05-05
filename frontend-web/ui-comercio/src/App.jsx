@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import DashboardPage from './pages/DashboardPage';
-import RegistrarPreciosPage from './pages/RegistrarPreciosPage';
 import CrearOfertasPage from './pages/CrearOfertasPage';
 import LoginPage from './pages/LoginPage';
 import PerfilPage from './pages/PerfilPage';
+import ReseniasPage from './pages/ReseniasPage';
+import RegistrarPreciosPage from './pages/RegistrarPreciosPage';
+import MultasPage from './pages/MultasPage';
+import ReportesPage from './pages/ReportesPage';
 
 function App() {
   // Estado para saber si el usuario está logueado
@@ -48,10 +51,13 @@ function App() {
         <main style={styles.mainContent}>
           <div style={styles.pageWrapper}>
             <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/precios" element={<RegistrarPreciosPage />} />
-              <Route path="/ofertas" element={<CrearOfertasPage />} />
-              <Route path="/perfil" element={<PerfilPage onLogout={cerrarSesion} />} />
+              <Route path="/" element={<DashboardPage comercioId={comercio.id} />} />
+              <Route path="/registrar-precios" element={<RegistrarPreciosPage comercioId={comercio.id} />} />
+              <Route path="/ofertas" element={<CrearOfertasPage comercioId={comercio.id} />} />
+              <Route path="/perfil" element={<PerfilPage comercioId={comercio.id} onLogout={cerrarSesion} />} />
+              <Route path="/resenias" element={<ReseniasPage comercioId={comercio.id} />} />
+              <Route path="/multas" element={<MultasPage comercioId={comercio.id} />} />
+              <Route path="/reportes" element={<ReportesPage comercioId={comercio.id} />} />
               {/* Cualquier ruta inventada lo regresa al inicio */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>

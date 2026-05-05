@@ -1,33 +1,49 @@
 import { useEffect, useState } from 'react';
-import { getProductos, getOfertasComercio } from '../api/comercio';
+import { getProductos, getPreciosPorComercio } from '../api/catalogo';
+import { getOfertasComercio as getOfertas } from '../api/comercio';
 import { useNavigate } from 'react-router-dom';
 
-export default function DashboardPage() {
+export default function DashboardPage({ comercioId }) {
   const [productos, setProductos] = useState([]);
-  const [stats, setStats] = useState({ totalProd: 0, misPrecios: 0, ofertasActivas: 0 });
+  const [stats, setStats] = useState({ totalProd: 0, misPrecios: 0, ofertasActivas: 0, wishlists: 0 });
   const [cargando, setCargando] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const cargarDashboard = async () => {
       try {
-        // 1. Cargar productos del catálogo real
+        // 1. Cargar catálogo global (solo para stats o cruzar datos)
         const resP = await getProductos();
         const listaP = Array.isArray(resP.data) ? resP.data : (resP.data.productos || []);
-        setProductos(listaP.slice(0, 5)); // Solo mostramos los últimos 5
 
-        // 2. Cargar precios de la memoria local
-        const preciosGuardados = JSON.parse(localStorage.getItem('precios_simulados') || '[]');
+        // 2. Cargar mis precios reales
+        const resPrecios = await getPreciosPorComercio(comercioId);
+        const misPreciosList = resPrecios.data.precios || resPrecios.data || [];
         
+        // Mapear los precios para tener el nombre del producto
+        const misProductosEnVenta = misPreciosList.map(precio => {
+          const prodInfo = listaP.find(p => p.id === precio.productoId);
+          return {
+            ...precio,
+            nombreProducto: prodInfo ? prodInfo.nombre : `Producto #${precio.productoId}`
+          };
+        });
+
+        setProductos(misProductosEnVenta.slice(0, 5)); // Mostrar los últimos 5 de mis precios
+
         // 3. Cargar ofertas reales del backend
-        const resO = await getOfertasComercio(1);
+        const resO = await getOfertas(comercioId);
         const listaO = resO.data.ofertas || [];
+
+        // Simulación: Productos en wishlist
+        const wishlistAprox = Math.floor(Math.random() * 50) + 10;
 
         // Calcular estadísticas
         setStats({
           totalProd: listaP.length,
-          misPrecios: preciosGuardados.length,
-          ofertasActivas: listaO.length
+          misPrecios: misPreciosList.length,
+          ofertasActivas: listaO.length,
+          wishlists: wishlistAprox
         });
 
       } catch (error) {
@@ -48,11 +64,7 @@ export default function DashboardPage() {
 
       {/* TARJETAS DE ESTADÍSTICAS */}
       <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>Catálogo Total</span>
-          <h2 style={styles.statValue}>{stats.totalProd}</h2>
-          <span style={styles.statDesc}>Productos en sistema</span>
-        </div>
+        {/* Se quitó la estadística del Catálogo Global porque al comercio solo le interesan sus propios datos */}
         <div style={styles.statCard}>
           <span style={styles.statLabel}>Tus Precios</span>
           <h2 style={styles.statValue}>{stats.misPrecios}</h2>
@@ -63,30 +75,36 @@ export default function DashboardPage() {
           <h2 style={{...styles.statValue, color: '#2563eb'}}>{stats.ofertasActivas}</h2>
           <span style={styles.statDesc}>Promociones publicadas</span>
         </div>
+        <div style={{...styles.statCard, borderLeft: '4px solid #10b981'}}>
+          <span style={{...styles.statLabel, color: '#10b981'}}>Favoritos (Wishlists)</span>
+          <h2 style={{...styles.statValue, color: '#10b981'}}>{stats.wishlists}</h2>
+          <span style={styles.statDesc}>Veces que tus productos fueron guardados</span>
+        </div>
       </div>
 
-      {/* LISTA DE PRODUCTOS RECIENTES */}
+      {/* LISTA DE MIS PRECIOS RECIENTES */}
       <div style={styles.card}>
         <div style={styles.cardHeader}>
-          <h2 style={styles.cardTitle}>Productos Recientes en el Sistema</h2>
-          <button onClick={() => navigate('/precios')} style={styles.viewAll}>Ver catálogo completo</button>
+          <h2 style={styles.cardTitle}>Tus Precios Registrados</h2>
+          <button onClick={() => navigate('/registrar-precios')} style={styles.viewAll}>Ver y editar todos</button>
         </div>
         
         <div style={styles.list}>
-          {productos.map((prod) => (
-            <div key={prod.id} style={styles.listItem}>
-              <div>
-                <div style={styles.prodName}>{prod.nombre}</div>
-                <div style={styles.prodId}>ID: {prod.id}</div>
+          {productos.length === 0 ? (
+             <div style={{padding: '1.5rem', color: '#6b7280'}}>No tienes productos a la venta aún.</div>
+          ) : (
+            productos.map((prod) => (
+              <div key={prod.id} style={styles.listItem}>
+                <div>
+                  <div style={styles.prodName}>{prod.nombreProducto}</div>
+                  <div style={styles.prodId}>ID de Precio: {prod.id}</div>
+                </div>
+                <span style={{fontWeight: 'bold', color: '#10b981'}}>
+                  ${prod.precio?.toFixed(2)}
+                </span>
               </div>
-              <span 
-                style={styles.itemAction} 
-                onClick={() => navigate('/precios')}
-              >
-                Registrar Precio &rarr;
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

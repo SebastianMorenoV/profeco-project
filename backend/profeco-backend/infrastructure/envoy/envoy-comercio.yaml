@@ -48,35 +48,22 @@ static_resources:
                       # OJO: Como el transcodificador traduce todo antes de llegar aquí,
                       # estas rutas buscan el "nombre del paquete gRPC" en lugar de la URL original (/api/...).
                       routes:
-                        # Si el paquete es de comercio, mándalo al cluster ms-comercio
                         - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
                           route: { cluster: ms-comercio }
-                        # Si el paquete es de catalogo, mándalo al cluster ms-catalogo
                         - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
                           route: { cluster: ms-catalogo }
-                        # Si el paquete es de ofertas, mándalo al cluster ms-ofertas
                         - match: { prefix: "/profeco.ofertas.v1.OfertasService/" }
                           route: { cluster: ms-ofertas }
-                        # Si el paquete es de resenias, mándalo al cluster ms-resenias
                         - match: { prefix: "/profeco.resenias.v1.ReseniasService/" }
                           route: { cluster: ms-resenias }
-                        # Si el paquete es de usuarios, mándalo al cluster ms-usuarios
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
                           route: { cluster: ms-usuarios }
                         - match: { prefix: "/profeco.multas.v1.MultasService/" }
                           route: { cluster: ms-multas }
-                        - match: { prefix: "/api/comercios" }
+                        # Catch-all para que las peticiones OPTIONS (CORS preflight) encuentren una ruta válida
+                        # y el filtro CORS de Envoy pueda procesarlas. El tráfico normal ya fue transcodificado arriba.
+                        - match: { prefix: "/" }
                           route: { cluster: ms-comercio }
-                        - match: { prefix: "/api/catalogo" }
-                          route: { cluster: ms-catalogo }
-                        - match: { prefix: "/api/ofertas" }
-                          route: { cluster: ms-ofertas }
-                        - match: { prefix: "/api/resenias" }
-                          route: { cluster: ms-resenias }
-                        - match: { prefix: "/api/usuarios" }
-                          route: { cluster: ms-usuarios }
-                        - match: { prefix: "/api/multas" }
-                          route: { cluster: ms-multas }
 
                 # ---------------------------------------------------------
                 # 3. HTTP FILTERS (Filtros HTTP)
@@ -124,7 +111,8 @@ static_resources:
       type: STRICT_DNS
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
-      load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9091 } } } }] }] }
+      # ✅ CORRECCIÓN AQUÍ: Se cambió host.docker.internal por ms-catalogo
+      load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-catalogo, port_value: 9091 } } } }] }] }
 
     # Cluster del MS Ofertas (corre en el puerto 9095)
     - name: ms-ofertas

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getProductos, crearOferta, getOfertasComercio } from '../api/comercio';
+import { getPreciosPorComercio } from '../api/catalogo';
 
-export default function CrearOfertasPage() {
+export default function CrearOfertasPage({ comercioId }) {
   const [productos, setProductos] = useState([]);
   const [misOfertas, setMisOfertas] = useState([]);
   const [esFlexible, setEsFlexible] = useState(false); 
@@ -20,9 +21,22 @@ export default function CrearOfertasPage() {
   const cargarDatos = async () => {
     try {
       const resP = await getProductos();
-      setProductos(Array.isArray(resP.data) ? resP.data : (resP.data.productos || []));
+      const catalogoGlobal = Array.isArray(resP.data) ? resP.data : (resP.data.productos || []);
 
-      const resO = await getOfertasComercio(1);
+      const resPrecios = await getPreciosPorComercio(comercioId);
+      const misPreciosList = resPrecios.data.precios || resPrecios.data || [];
+      
+      const misProductosParaOfertas = misPreciosList.map(precio => {
+        const prodInfo = catalogoGlobal.find(p => p.id === precio.productoId);
+        return {
+          id: precio.productoId,
+          nombre: prodInfo ? prodInfo.nombre : `Producto #${precio.productoId}`
+        };
+      });
+
+      setProductos(misProductosParaOfertas);
+
+      const resO = await getOfertasComercio(comercioId);
       const listaO = resO.data.ofertas || [];
       setMisOfertas(listaO.map(of => ({
         id: of.id,
@@ -40,7 +54,7 @@ export default function CrearOfertasPage() {
     setEnviando(true);
     try {
       let payload = {
-        comercio_id: 1,
+        comercio_id: comercioId,
         precio_oferta: parseFloat(form.precioOferta),
         fecha_inicio: new Date().toISOString().split('T')[0],
         fecha_fin: form.fechaFin,
@@ -58,7 +72,7 @@ export default function CrearOfertasPage() {
       }
 
       await crearOferta(payload);
-      setMensaje({ texto: 'Oferta publicada con éxito 🎉', tipo: 'exito' });
+      setMensaje({ texto: 'Oferta publicada con éxito 🎉. Notificación push enviada a consumidores.', tipo: 'exito' });
       setForm({ idProducto: '', titulo: '', descripcion: '', precioOferta: '', fechaFin: '' });
       cargarDatos();
     } catch (error) {
@@ -123,7 +137,9 @@ export default function CrearOfertasPage() {
             </div>
 
             {mensaje.texto && <p style={{ color: mensaje.tipo === 'error' ? '#ef4444' : '#10b981', marginBottom: '1rem' }}>{mensaje.texto}</p>}
-            <button type="submit" disabled={enviando} style={styles.button}>Publicar</button>
+            <button type="submit" disabled={enviando} style={styles.button}>
+              {enviando ? 'Publicando...' : 'Publicar y Notificar a Clientes 🔔'}
+            </button>
           </form>
         </div>
 
