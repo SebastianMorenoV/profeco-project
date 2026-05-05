@@ -42,6 +42,9 @@ object ServiceLocator {
         appContext = context.applicationContext
         prefs = UserPrefs(appContext)
         ioScope.launch {
+            val initialState = prefs.state.first()
+            syncDownFromRemote(initialState.usuarioId)
+            
             prefs.state.collect { state ->
                 if (state.baseUrl != baseUrlState.value) {
                     baseUrlState.value = state.baseUrl
@@ -54,11 +57,6 @@ object ServiceLocator {
         }
     }
 
-    /**
-     * Empuja los cambios locales al backend.
-     * Why: el sync es best-effort — si falla la red, el cambio local ya está guardado y se reintenta
-     * la próxima vez que el usuario toque algo.
-     */
     private suspend fun sincronizarRemoto(event: SyncEvent) {
         val usuarioId = prefs.state.first().usuarioId
         if (usuarioId <= 0L) return
@@ -73,6 +71,22 @@ object ServiceLocator {
             }
         }.onFailure {
             android.util.Log.w("ServiceLocator", "Sync remoto falló: ${it.message}")
+        }
+    }
+
+    fun syncDownFromRemote(usuarioId: Long) {
+        ioScope.launch {
+            if (usuarioId <= 0L) return@launch
+            runCatching {
+                val favs = usuarios.obtenerComerciosFavoritos(usuarioId)
+                val wish = usuarios.obtenerWishlist(usuarioId)
+                val compras = usuarios.obtenerListaCompras(usuarioId).map {
+                    mx.edu.itson.potros.profecoconsumidor.data.ItemCompra(it.idLocal, it.nombre, it.marcado)
+                }
+                prefs.setRemoteData(favs, wish, compras)
+            }.onFailure {
+                android.util.Log.w("ServiceLocator", "Sync down falló: ${it.message}")
+            }
         }
     }
 

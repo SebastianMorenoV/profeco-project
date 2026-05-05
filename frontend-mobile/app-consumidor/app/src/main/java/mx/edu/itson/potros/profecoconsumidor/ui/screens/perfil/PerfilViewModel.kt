@@ -12,7 +12,10 @@ class PerfilViewModel : ViewModel() {
     val prefs: Flow<UserPrefsState> = ServiceLocator.prefs.state
 
     fun actualizarUsuarioId(id: Long) {
-        viewModelScope.launch { ServiceLocator.prefs.setUsuarioId(id) }
+        viewModelScope.launch {
+            ServiceLocator.prefs.setUsuarioId(id)
+            ServiceLocator.syncDownFromRemote(id)
+        }
     }
 
     fun actualizarBaseUrl(url: String) {

@@ -62,9 +62,9 @@ fun ProfecoApp() {
                         selected = seleccionado,
                         onClick = {
                             nav.navigate(item.route) {
-                                popUpTo(Routes.HOME) { saveState = true }
+                                popUpTo(Routes.HOME) { saveState = false }
                                 launchSingleTop = true
-                                restoreState = true
+                                restoreState = false
                             }
                         },
                         icon = { Icon(item.icon, contentDescription = item.label) },

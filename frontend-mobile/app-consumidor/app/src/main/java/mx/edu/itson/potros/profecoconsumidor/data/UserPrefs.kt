@@ -64,7 +64,21 @@ class UserPrefs(private val context: Context) {
     }
 
     suspend fun setUsuarioId(id: Long) =
-        context.dataStore.edit { it[KEY_USUARIO_ID] = id }
+        context.dataStore.edit { p ->
+            val oldId = p[KEY_USUARIO_ID] ?: 1L
+            if (oldId == id) return@edit
+            p[KEY_USUARIO_ID] = id
+            p.remove(KEY_FAV_COMERCIOS)
+            p.remove(KEY_WISHLIST)
+            p.remove(KEY_LISTA_COMPRAS)
+        }
+
+    suspend fun setRemoteData(favoritos: Set<Long>, wishlist: Set<Long>, compras: List<ItemCompra>) =
+        context.dataStore.edit { p ->
+            p[KEY_FAV_COMERCIOS] = favoritos.joinToString(",")
+            p[KEY_WISHLIST] = wishlist.joinToString(",")
+            p[KEY_LISTA_COMPRAS] = encodeListaCompras(compras)
+        }
 
     suspend fun setBaseUrl(url: String) =
         context.dataStore.edit { it[KEY_BASE_URL] = url.ifBlank { DEFAULT_BASE_URL } }
