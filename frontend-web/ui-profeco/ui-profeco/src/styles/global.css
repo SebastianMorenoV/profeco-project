@@ -850,3 +850,64 @@ a.card:hover {
     font-size: 1.45rem;
   }
 }
+
+/* =========================================
+   LOGIN PAGE
+========================================= */
+.login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 120% 80% at 100% -20%, rgba(91, 44, 131, 0.10), transparent),
+    radial-gradient(ellipse 80% 50% at 0% 100%, rgba(230, 81, 0, 0.06), transparent),
+    var(--c-bg);
+  padding: 1rem;
+}
+
+.login-card {
+  background: var(--c-surface);
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 32px rgba(20, 26, 38, 0.10), 0 1px 4px rgba(20, 26, 38, 0.06);
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--c-border);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--c-text);
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid var(--c-border);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--c-text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-logout:hover {
+  background: var(--c-primary-soft);
+  border-color: var(--c-primary);
+  color: var(--c-primary-dark);
+}

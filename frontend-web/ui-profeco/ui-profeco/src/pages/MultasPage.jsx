@@ -1,17 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { multasApi } from '../api';
+import { multasApi, usuariosApi, comerciosApi } from '../api';
 import { useFetch } from '../hooks/useFetch';
 import { Loader, ErrorBox, EmptyState } from '../components/Loader';
 import { formatDate, formatMXN } from '../utils/format';
-
-/** Solo si el agente no escribe ID; reemplazar cuando haya autenticación. */
-const DEFAULT_EMITIDO_POR_USUARIO_ID = 5;
+import {
+  useCategories,
+  DEFAULT_MOTIVOS_MULTA,
+  STORAGE_KEY_MOTIVOS
+} from '../hooks/useCategories';
 
 export function MultasPage() {
   const [searchParams] = useSearchParams();
   const [estatusFiltro, setEstatusFiltro] = useState('');
 
+  /* ── Categorías dinámicas de motivos ── */
+  const { items: motivosMulta } = useCategories(STORAGE_KEY_MOTIVOS, DEFAULT_MOTIVOS_MULTA);
+
+  /* ── Datos auxiliares para los comboboxes ── */
+  const { data: agentes, loading: loadingAgentes } = useFetch(
+    () => usuariosApi.listar('PROFECO'),
+    []
+  );
+
+  const { data: comercios, loading: loadingComercios } = useFetch(
+    () => comerciosApi.listar(),
+    []
+  );
+
+  /* ── Lista principal de multas ── */
   const { data: multas, loading, error, reload } = useFetch(
     () => multasApi.listar(estatusFiltro),
     [estatusFiltro]
@@ -21,7 +38,7 @@ export function MultasPage() {
 
   const [form, setForm] = useState(() => ({
     comercioId: searchParams.get('comercioId') ?? '',
-    motivo: 'PRECIO_EXCESIVO',
+    motivo: motivosMulta.length > 0 ? motivosMulta[0].key : '',
     descripcion: '',
     monto: '',
     reporteId: searchParams.get('reporteId') ?? '',
@@ -31,6 +48,37 @@ export function MultasPage() {
   const [okMsg, setOkMsg] = useState(null);
   const [errMsg, setErrMsg] = useState(null);
 
+  /* ── Caché de nombres de comercios para la tabla ── */
+  const [comerciosMap, setComerciosMap] = useState({});
+
+  useEffect(() => {
+    if (!multas) return;
+    const uniqueIds = [...new Set(multas.map((m) => m.comercioId))];
+    const missingIds = uniqueIds.filter((id) => !(id in comerciosMap));
+
+    if (missingIds.length > 0) {
+      const fetchMissing = async () => {
+        try {
+          const promises = missingIds.map((id) => comerciosApi.obtener(id));
+          const results = await Promise.allSettled(promises);
+          const newData = {};
+          results.forEach((res, idx) => {
+            const reqId = missingIds[idx];
+            if (res.status === 'fulfilled' && res.value) {
+              newData[reqId] = res.value;
+            } else {
+              newData[reqId] = { nombreComercial: `Comercio #${reqId}` };
+            }
+          });
+          setComerciosMap((prev) => ({ ...prev, ...newData }));
+        } catch (err) {
+          console.error('Error cargando comercios', err);
+        }
+      };
+      fetchMissing();
+    }
+  }, [multas, comerciosMap]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setProcesando(true);
@@ -38,23 +86,23 @@ export function MultasPage() {
     setErrMsg(null);
 
     try {
-      const rawAgente = String(form.emitidoPorUsuarioId).trim();
-      const emitidoPorUsuarioId =
-        rawAgente === ''
-          ? DEFAULT_EMITIDO_POR_USUARIO_ID
-          : Number(rawAgente);
+      const comercioId = Number(form.comercioId);
+      const emitidoPorUsuarioId = Number(form.emitidoPorUsuarioId);
 
-      if (
-        rawAgente !== '' &&
-        (!Number.isInteger(emitidoPorUsuarioId) || emitidoPorUsuarioId < 1)
-      ) {
-        setErrMsg('El ID del agente debe ser un número entero positivo o dejarse en blanco.');
+      if (!Number.isInteger(comercioId) || comercioId < 1) {
+        setErrMsg('Debes seleccionar un comercio.');
+        setProcesando(false);
+        return;
+      }
+
+      if (!Number.isInteger(emitidoPorUsuarioId) || emitidoPorUsuarioId < 1) {
+        setErrMsg('Debes seleccionar un agente PROFECO.');
         setProcesando(false);
         return;
       }
 
       await multasApi.emitir({
-        comercioId: Number(form.comercioId),
+        comercioId,
         motivo: form.motivo,
         descripcion: form.descripcion,
         monto: Number(form.monto),
@@ -65,7 +113,7 @@ export function MultasPage() {
       setOkMsg('¡Multa emitida con éxito!');
       setForm({
         comercioId: '',
-        motivo: 'PRECIO_EXCESIVO',
+        motivo: motivosMulta.length > 0 ? motivosMulta[0].key : '',
         descripcion: '',
         monto: '',
         reporteId: '',
@@ -104,26 +152,39 @@ export function MultasPage() {
         <h3>Emitir Nueva Multa</h3>
         <form className="resenia-form" onSubmit={handleSubmit}>
           <div className="grid grid-2">
+            {/* ── Comercio (combobox) ── */}
             <label>
-              ID del Comercio:
-              <input
-                type="number" required min="1"
-                value={form.comercioId}
-                onChange={e => setForm({...form, comercioId: e.target.value})}
-              />
+              Comercio:
+              {loadingComercios ? (
+                <Loader label="Cargando comercios…" />
+              ) : (
+                <select
+                  required
+                  value={form.comercioId}
+                  onChange={(e) => setForm({ ...form, comercioId: e.target.value })}
+                >
+                  <option value="">Selecciona un comercio</option>
+                  {(comercios ?? []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombreComercial} — {c.ciudad ?? ''}
+                    </option>
+                  ))}
+                </select>
+              )}
             </label>
 
+            {/* ── Motivo (dinámico) ── */}
             <label>
               Motivo:
               <select
                 value={form.motivo}
-                onChange={e => setForm({...form, motivo: e.target.value})}
+                onChange={(e) => setForm({ ...form, motivo: e.target.value })}
               >
-                <option value="PRECIO_EXCESIVO">Precio Excesivo</option>
-                <option value="PRODUCTO_ADULTERADO">Producto Adulterado</option>
-                <option value="PUBLICIDAD_ENGANOSA">Publicidad Engañosa</option>
-                <option value="NEGACION_SERVICIO">Negación de Servicio</option>
-                <option value="INCUMPLIMIENTO_OFERTA">Incumplimiento de Oferta</option>
+                {motivosMulta.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.label}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -132,7 +193,7 @@ export function MultasPage() {
               <input
                 type="number" required min="0" step="0.01"
                 value={form.monto}
-                onChange={e => setForm({...form, monto: e.target.value})}
+                onChange={(e) => setForm({ ...form, monto: e.target.value })}
               />
             </label>
 
@@ -142,20 +203,29 @@ export function MultasPage() {
                 type="number" min="1"
                 placeholder="Si deriva de un reporte"
                 value={form.reporteId}
-                onChange={e => setForm({...form, reporteId: e.target.value})}
+                onChange={(e) => setForm({ ...form, reporteId: e.target.value })}
               />
             </label>
 
+            {/* ── Agente PROFECO (combobox) ── */}
             <label>
-              ID del agente que emite (opcional):
-              <input
-                type="number"
-                min="1"
-                step="1"
-                placeholder={`Vacío = ${DEFAULT_EMITIDO_POR_USUARIO_ID}`}
-                value={form.emitidoPorUsuarioId}
-                onChange={(e) => setForm({ ...form, emitidoPorUsuarioId: e.target.value })}
-              />
+              Agente que emite:
+              {loadingAgentes ? (
+                <Loader label="Cargando agentes…" />
+              ) : (
+                <select
+                  required
+                  value={form.emitidoPorUsuarioId}
+                  onChange={(e) => setForm({ ...form, emitidoPorUsuarioId: e.target.value })}
+                >
+                  <option value="">Selecciona un agente</option>
+                  {(agentes ?? []).map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombre} {a.apellido} — {a.email}
+                    </option>
+                  ))}
+                </select>
+              )}
             </label>
           </div>
 
@@ -164,7 +234,7 @@ export function MultasPage() {
             <textarea
               required rows={3}
               value={form.descripcion}
-              onChange={e => setForm({...form, descripcion: e.target.value})}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
             />
           </label>
           
@@ -213,42 +283,61 @@ export function MultasPage() {
               </tr>
             </thead>
             <tbody>
-              {multas.map((m) => (
-                <tr key={m.id}>
-                  <td><strong>#{m.id}</strong></td>
-                  <td className="muted small">{formatDate(m.fechaEmision)}</td>
-                  <td>ID: {m.comercioId}</td>
-                  <td><span className="chip">{m.motivo.replace(/_/g, ' ')}</span></td>
-                  <td><strong>{formatMXN(m.monto)}</strong></td>
-                  <td>
-                    <span style={{ 
-                      color: m.estatus === 'PAGADA' ? 'var(--c-success)' : 
-                             m.estatus === 'PENDIENTE' ? 'var(--c-accent)' : 'var(--c-muted)'
-                    }}>
-                      {m.estatus}
-                    </span>
-                  </td>
-                  <td>
-                    {m.estatus === 'PENDIENTE' && (
-                      <div className="acciones-container">
-                        <button
-                          type="button"
-                          className="btn-action btn-success"
-                          disabled={procesando}
-                          onClick={() => cambiarEstatus(m.id, 'PAGADA')}
-                        >
-                          Marcar Pagada
-                        </button>
-                        
-                        <button
-                          type="button"
-                          className="btn-action btn-primary"
-                          disabled={procesando}
-                          onClick={() => cambiarEstatus(m.id, 'APELACION')}
-                        >
-                          Apelación
-                        </button>
-                        
+              {multas.map((m) => {
+                const comercioInfo = comerciosMap[m.comercioId];
+                const nombreComercio = comercioInfo?.nombreComercial ?? 'Cargando...';
+
+                return (
+                  <tr key={m.id}>
+                    <td><strong>#{m.id}</strong></td>
+                    <td className="muted small">{formatDate(m.fechaEmision)}</td>
+                    <td>
+                      {nombreComercio}<br/>
+                      <span className="muted small">ID: {m.comercioId}</span>
+                    </td>
+                    <td><span className="chip">{m.motivo.replace(/_/g, ' ')}</span></td>
+                    <td><strong>{formatMXN(m.monto)}</strong></td>
+                    <td>
+                      <span style={{ 
+                        color: m.estatus === 'PAGADA' ? 'var(--c-success)' : 
+                               m.estatus === 'PENDIENTE' ? 'var(--c-accent)' : 'var(--c-muted)'
+                      }}>
+                        {m.estatus}
+                      </span>
+                    </td>
+                    <td>
+                      {m.estatus === 'PENDIENTE' && (
+                        <div className="acciones-container">
+                          <button
+                            type="button"
+                            className="btn-action btn-success"
+                            disabled={procesando}
+                            onClick={() => cambiarEstatus(m.id, 'PAGADA')}
+                          >
+                            Marcar Pagada
+                          </button>
+                          
+                          <button
+                            type="button"
+                            className="btn-action btn-primary"
+                            disabled={procesando}
+                            onClick={() => cambiarEstatus(m.id, 'APELACION')}
+                          >
+                            Apelación
+                          </button>
+                          
+                          <button
+                            type="button"
+                            className="btn-action btn-danger"
+                            disabled={procesando}
+                            onClick={() => cambiarEstatus(m.id, 'CANCELADA')}
+                          >
+                            Cancelar multa
+                          </button>
+                        </div>
+                      )}
+                      
+                      {m.estatus === 'APELACION' && (
                         <button
                           type="button"
                           className="btn-action btn-danger"
@@ -257,22 +346,11 @@ export function MultasPage() {
                         >
                           Cancelar multa
                         </button>
-                      </div>
-                    )}
-                    
-                    {m.estatus === 'APELACION' && (
-                      <button
-                        type="button"
-                        className="btn-action btn-danger"
-                        disabled={procesando}
-                        onClick={() => cambiarEstatus(m.id, 'CANCELADA')}
-                      >
-                        Cancelar multa
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           </div>

@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
-export function Layout() {
+export function Layout({ usuario, onLogout }) {
   return (
     <div className="app">
       <header className="app-header">
@@ -15,7 +15,18 @@ export function Layout() {
           <nav className="main-nav">
             <NavLink to="/reportes">Reportes</NavLink>
             <NavLink to="/multas">Multas</NavLink>
+            <NavLink to="/comercios">Comercios</NavLink>
+            <NavLink to="/usuarios">Usuarios</NavLink>
+            <NavLink to="/categorias">Categorías</NavLink>
           </nav>
+          {usuario && (
+            <div className="user-info">
+              <span className="user-name">{usuario.nombre} {usuario.apellido}</span>
+              <button type="button" className="btn-logout" onClick={onLogout}>
+                Cerrar sesión
+              </button>
+            </div>
+          )}
         </div>
       </header>
       <main className="container app-main">

@@ -10,8 +10,16 @@ export const usuariosApi = {
     const r = await http.get(`/api/usuarios${qs}`);
     return r.usuarios ?? [];
   },
+  registrar: async (data) => {
+    const r = await http.post('/api/usuarios', data);
+    return r.usuario;
+  },
+  login: async (email, password) => {
+    const r = await http.post('/api/usuarios/login', { email, password });
+    return r; // { exito, mensaje, usuario }
+  },
   buscarPorEmail: async (email) => {
-  const r = await http.get(`/api/usuarios/email/${email}`);
-  return r.usuario;
-}
+    const r = await http.get(`/api/usuarios/email/${email}`);
+    return r.usuario;
+  }
 };
