@@ -1,1 +1,0 @@
-Aqui debera ir la mensajeria utilizando rabbitMQ 
