@@ -168,7 +168,11 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
+      - MS_USUARIOS_HOST=ms-usuarios
+      - MS_USUARIOS_GRPC_PORT=9096
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    depends_on:
+      - ms-usuarios
     extra_hosts:
       - "host.docker.internal:host-gateway"
     deploy:
