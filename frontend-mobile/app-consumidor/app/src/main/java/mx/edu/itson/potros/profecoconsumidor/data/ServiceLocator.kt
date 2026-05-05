@@ -37,6 +37,7 @@ object ServiceLocator {
     val resenias: ReseniasRepository get() = ReseniasRepository(apiClient)
     val multas: MultasRepository get() = MultasRepository(apiClient)
     val usuarios: UsuariosRepository get() = UsuariosRepository(apiClient)
+    val auth: AuthRepository get() = AuthRepository(apiClient)
 
     fun init(context: Context) {
         appContext = context.applicationContext

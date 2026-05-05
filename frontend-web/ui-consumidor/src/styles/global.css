@@ -468,6 +468,58 @@ a.card:hover {
 .main-nav .nav-cta:hover { background: #e07a00; color: #fff; }
 .main-nav .nav-cta.active { background: #c66c00; color: #fff; }
 
+.main-nav .nav-logout {
+  background: transparent;
+  border: 1px solid var(--c-border);
+  color: var(--c-muted);
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: 0.25rem;
+}
+.main-nav .nav-logout:hover {
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+}
+
+.auth-shell {
+  min-height: calc(100vh - 1px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f3eaff 0%, #ffffff 50%, #fff4e6 100%);
+}
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 12px 30px rgba(20, 22, 40, 0.08);
+}
+.auth-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.auth-header h1 { font-size: 1.25rem; margin: 0; }
+.auth-header p { margin: 0.25rem 0 0 0; }
+.auth-card .resenia-form { gap: 1rem; }
+.auth-card button[type="submit"] { width: 100%; justify-self: stretch; }
+.auth-footer {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  text-align: center;
+}
+
 .card-actions {
   display: flex;
   align-items: center;

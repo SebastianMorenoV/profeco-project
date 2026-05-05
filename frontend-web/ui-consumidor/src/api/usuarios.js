@@ -1,6 +1,20 @@
 import { http } from './client';
 
 export const usuariosApi = {
+  login: async (email, password) => {
+    return await http.post('/api/usuarios/login', { email, password });
+  },
+  registrar: async ({ nombre, apellido, email, telefono, password }) => {
+    const r = await http.post('/api/usuarios', {
+      nombre,
+      apellido,
+      email,
+      telefono: telefono ?? '',
+      tipo_usuario: 'CONSUMIDOR',
+      password
+    });
+    return r.usuario;
+  },
   obtenerComerciosFavoritos: async (usuarioId) => {
     const r = await http.get(`/api/usuarios/${usuarioId}/comercios-favoritos`);
     return r.ids ?? [];

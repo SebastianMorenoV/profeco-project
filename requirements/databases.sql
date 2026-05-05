@@ -14,17 +14,22 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email VARCHAR(150) NOT NULL UNIQUE,
     telefono VARCHAR(20),
     tipo_usuario ENUM('CONSUMIDOR','COMERCIANTE','PROFECO') NOT NULL,
+    password VARCHAR(120) NOT NULL DEFAULT '',
     activo BOOLEAN DEFAULT TRUE,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Seed data
-INSERT INTO usuarios (nombre, apellido, email, telefono, tipo_usuario) VALUES
-('Juan', 'Pérez', 'juan.perez@mail.com', '6441234567', 'CONSUMIDOR'),
-('María', 'López', 'maria.lopez@mail.com', '6449876543', 'CONSUMIDOR'),
-('Carlos', 'García', 'carlos.garcia@comercio.com', '6441112233', 'COMERCIANTE'),
-('Ana', 'Martínez', 'ana.martinez@comercio.com', '6442223344', 'COMERCIANTE'),
-('Roberto', 'Hernández', 'roberto.hdz@profeco.gob.mx', '6443334455', 'PROFECO');
+INSERT INTO usuarios (nombre, apellido, email, telefono, tipo_usuario, password) VALUES
+('Juan', 'Pérez', 'juan.perez@mail.com', '6441234567', 'CONSUMIDOR', '12345678'),
+('María', 'López', 'maria.lopez@mail.com', '6449876543', 'CONSUMIDOR', '12345678'),
+('Carlos', 'García', 'carlos.garcia@comercio.com', '6441112233', 'COMERCIANTE', '12345678'),
+('Ana', 'Martínez', 'ana.martinez@comercio.com', '6442223344', 'COMERCIANTE', '12345678'),
+('Roberto', 'Hernández', 'roberto.hdz@profeco.gob.mx', '6443334455', 'PROFECO', '12345678');
+
+-- Migración para BDs existentes (ignorar errores si ya existe la columna)
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password VARCHAR(120) NOT NULL DEFAULT '';
+UPDATE usuarios SET password = '12345678' WHERE password = '' OR password IS NULL;
 
 -- Tablas auxiliares del consumidor móvil (sincronizadas con el backend)
 CREATE TABLE IF NOT EXISTS fcm_tokens (

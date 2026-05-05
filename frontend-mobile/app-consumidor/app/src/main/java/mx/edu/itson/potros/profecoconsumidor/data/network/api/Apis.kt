@@ -15,6 +15,8 @@ import mx.edu.itson.potros.profecoconsumidor.data.network.dto.PromedioDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ListaIdsResponseDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ListaItemsComprasResponseDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.MensajeResponseDto
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.LoginRequest
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.LoginResponse
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarFcmTokenRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarUsuarioRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ReporteResponse
@@ -90,6 +92,9 @@ interface MultasApi {
 interface UsuariosApi {
     @POST("/api/usuarios")
     suspend fun registrar(@Body body: RegistrarUsuarioRequest): UsuarioResponse
+
+    @POST("/api/usuarios/login")
+    suspend fun login(@Body body: LoginRequest): LoginResponse
 
     @GET("/api/usuarios/{id}")
     suspend fun obtener(@Path("id") id: Long): UsuarioResponse

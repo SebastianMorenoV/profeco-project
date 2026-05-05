@@ -144,7 +144,28 @@ data class RegistrarUsuarioRequest(
     val apellido: String,
     val email: String,
     val telefono: String,
-    val tipo_usuario: String = "CONSUMIDOR"
+    val tipo_usuario: String = "CONSUMIDOR",
+    val password: String
+)
+
+@Serializable
+data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+@Serializable
+data class LoginResponse(
+    val exito: Boolean = false,
+    val mensaje: String = "",
+    val usuario: UsuarioDto? = null
+)
+
+@Serializable
+data class CambiarPasswordRequest(
+    val id: Long,
+    val password_actual: String,
+    val password_nuevo: String
 )
 
 // =============== Sync del consumidor con el backend ===============

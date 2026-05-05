@@ -1,6 +1,18 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 
 export function Layout() {
+  const { nombre, apellido, email, cerrarSesion } = useUser();
+  const navigate = useNavigate();
+
+  const salir = () => {
+    cerrarSesion();
+    navigate('/login', { replace: true });
+  };
+
+  const nombreCompleto = [nombre, apellido].filter(Boolean).join(' ').trim();
+  const etiquetaUsuario = nombreCompleto || email || 'Mi cuenta';
+
   return (
     <div className="app">
       <header className="app-header">
@@ -18,7 +30,10 @@ export function Layout() {
             <NavLink to="/ofertas">Ofertas</NavLink>
             <NavLink to="/reportar">Reportar</NavLink>
             <NavLink to="/lista-compras">Lista</NavLink>
-            <NavLink to="/perfil" className="nav-cta">Mi cuenta</NavLink>
+            <NavLink to="/perfil" className="nav-cta">{etiquetaUsuario}</NavLink>
+            <button type="button" className="nav-logout" onClick={salir}>
+              Salir
+            </button>
           </nav>
         </div>
       </header>

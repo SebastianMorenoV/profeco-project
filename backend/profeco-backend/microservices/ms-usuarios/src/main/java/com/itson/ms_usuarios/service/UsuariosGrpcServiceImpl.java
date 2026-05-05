@@ -48,16 +48,100 @@ public class UsuariosGrpcServiceImpl extends UsuariosServiceGrpc.UsuariosService
 
     @Override
     public void registrarUsuario(RegistrarUsuarioRequest request, StreamObserver<UsuarioResponse> responseObserver) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            responseObserver.onError(io.grpc.Status.INVALID_ARGUMENT
+                    .withDescription("email es obligatorio").asRuntimeException());
+            return;
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            responseObserver.onError(io.grpc.Status.INVALID_ARGUMENT
+                    .withDescription("password debe tener al menos 6 caracteres").asRuntimeException());
+            return;
+        }
+        if (usuarioRepo.findByEmail(request.getEmail()).isPresent()) {
+            responseObserver.onError(io.grpc.Status.ALREADY_EXISTS
+                    .withDescription("Ya existe un usuario con ese email").asRuntimeException());
+            return;
+        }
+
         Usuario entity = new Usuario();
         entity.setNombre(request.getNombre());
         entity.setApellido(request.getApellido());
         entity.setEmail(request.getEmail());
         entity.setTelefono(request.getTelefono());
-        entity.setTipoUsuario(request.getTipoUsuario());
+        String tipo = request.getTipoUsuario() == null || request.getTipoUsuario().isBlank()
+                ? "CONSUMIDOR" : request.getTipoUsuario();
+        entity.setTipoUsuario(tipo);
+        entity.setPassword(request.getPassword());
 
         Usuario saved = usuarioRepo.save(entity);
         responseObserver.onNext(UsuarioResponse.newBuilder().setUsuario(toProto(saved)).build());
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void login(LoginRequest request, StreamObserver<LoginResponse> responseObserver) {
+        String email = request.getEmail() == null ? "" : request.getEmail().trim();
+        String password = request.getPassword() == null ? "" : request.getPassword();
+
+        if (email.isEmpty() || password.isEmpty()) {
+            responseObserver.onNext(LoginResponse.newBuilder()
+                    .setExito(false).setMensaje("Captura email y contraseña.").build());
+            responseObserver.onCompleted();
+            return;
+        }
+
+        usuarioRepo.findByEmail(email).ifPresentOrElse(
+                u -> {
+                    if (!Boolean.TRUE.equals(u.getActivo())) {
+                        responseObserver.onNext(LoginResponse.newBuilder()
+                                .setExito(false).setMensaje("Usuario inactivo.").build());
+                    } else if (!password.equals(u.getPassword())) {
+                        responseObserver.onNext(LoginResponse.newBuilder()
+                                .setExito(false).setMensaje("Contraseña incorrecta.").build());
+                    } else {
+                        responseObserver.onNext(LoginResponse.newBuilder()
+                                .setExito(true)
+                                .setMensaje("Bienvenido, " + u.getNombre() + ".")
+                                .setUsuario(toProto(u))
+                                .build());
+                    }
+                    responseObserver.onCompleted();
+                },
+                () -> {
+                    responseObserver.onNext(LoginResponse.newBuilder()
+                            .setExito(false).setMensaje("No existe una cuenta con ese email.").build());
+                    responseObserver.onCompleted();
+                }
+        );
+    }
+
+    @Override
+    public void cambiarPassword(CambiarPasswordRequest request, StreamObserver<MensajeResponse> responseObserver) {
+        usuarioRepo.findById(request.getId()).ifPresentOrElse(
+                u -> {
+                    if (request.getPasswordNuevo() == null || request.getPasswordNuevo().length() < 6) {
+                        responseObserver.onError(io.grpc.Status.INVALID_ARGUMENT
+                                .withDescription("password_nuevo debe tener al menos 6 caracteres")
+                                .asRuntimeException());
+                        return;
+                    }
+                    if (!request.getPasswordActual().equals(u.getPassword())) {
+                        responseObserver.onNext(MensajeResponse.newBuilder()
+                                .setExito(false).setMensaje("La contraseña actual no coincide.").build());
+                        responseObserver.onCompleted();
+                        return;
+                    }
+                    u.setPassword(request.getPasswordNuevo());
+                    usuarioRepo.save(u);
+                    responseObserver.onNext(MensajeResponse.newBuilder()
+                            .setExito(true).setMensaje("Contraseña actualizada.").build());
+                    responseObserver.onCompleted();
+                },
+                () -> responseObserver.onError(io.grpc.Status.NOT_FOUND
+                        .withDescription("Usuario no encontrado con ID: " + request.getId())
+                        .asRuntimeException())
+        );
     }
 
     @Override

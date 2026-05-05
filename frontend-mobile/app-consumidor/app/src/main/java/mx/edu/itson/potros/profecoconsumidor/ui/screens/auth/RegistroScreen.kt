@@ -40,8 +40,10 @@ fun RegistroScreen(
     vm: AuthViewModel = viewModel()
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
-    var nombreCompleto by remember { mutableStateOf("") }
-    var usuario by remember { mutableStateOf("") }
+    var nombre by remember { mutableStateOf("") }
+    var apellido by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmar by remember { mutableStateOf("") }
 
@@ -85,18 +87,33 @@ fun RegistroScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(
-                            value = nombreCompleto,
-                            onValueChange = { nombreCompleto = it; vm.limpiarMensajes() },
-                            label = { Text("Nombre completo") },
+                            value = nombre,
+                            onValueChange = { nombre = it; vm.limpiarMensajes() },
+                            label = { Text("Nombre") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                         OutlinedTextField(
-                            value = usuario,
-                            onValueChange = { usuario = it.filter { c -> !c.isWhitespace() }; vm.limpiarMensajes() },
-                            label = { Text("Usuario") },
+                            value = apellido,
+                            onValueChange = { apellido = it; vm.limpiarMensajes() },
+                            label = { Text("Apellido") },
                             singleLine = true,
-                            supportingText = { Text("Mínimo 4 caracteres, sin espacios.") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it.trim(); vm.limpiarMensajes() },
+                            label = { Text("Correo electrónico") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = telefono,
+                            onValueChange = { telefono = it.filter { c -> c.isDigit() }; vm.limpiarMensajes() },
+                            label = { Text("Teléfono (opcional)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             modifier = Modifier.fillMaxWidth()
                         )
                         OutlinedTextField(
@@ -124,7 +141,7 @@ fun RegistroScreen(
 
                         Button(
                             onClick = {
-                                vm.registrar(usuario, password, confirmar, nombreCompleto, onRegistroExitoso)
+                                vm.registrar(nombre, apellido, email, telefono, password, confirmar, onRegistroExitoso)
                             },
                             enabled = !ui.procesando,
                             modifier = Modifier.fillMaxWidth()

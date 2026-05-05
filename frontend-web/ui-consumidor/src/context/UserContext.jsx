@@ -11,7 +11,11 @@ const defaultState = {
   favoritos: [],
   wishlist: [],
   listaCompras: [],
-  busquedasRecientes: []
+  busquedasRecientes: [],
+  sesionActiva: false,
+  nombre: '',
+  apellido: '',
+  email: ''
 };
 
 function readState() {
@@ -24,7 +28,11 @@ function readState() {
       favoritos: Array.isArray(parsed.favoritos) ? parsed.favoritos.map(Number).filter(Boolean) : [],
       wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist.map(Number).filter(Boolean) : [],
       listaCompras: Array.isArray(parsed.listaCompras) ? parsed.listaCompras : [],
-      busquedasRecientes: Array.isArray(parsed.busquedasRecientes) ? parsed.busquedasRecientes : []
+      busquedasRecientes: Array.isArray(parsed.busquedasRecientes) ? parsed.busquedasRecientes : [],
+      sesionActiva: Boolean(parsed.sesionActiva),
+      nombre: typeof parsed.nombre === 'string' ? parsed.nombre : '',
+      apellido: typeof parsed.apellido === 'string' ? parsed.apellido : '',
+      email: typeof parsed.email === 'string' ? parsed.email : ''
     };
   } catch {
     return defaultState;
@@ -190,6 +198,32 @@ export function UserProvider({ children, syncFavoritos, syncWishlist, syncListaC
     setState((s) => ({ ...s, busquedasRecientes: [] }));
   }, []);
 
+  const iniciarSesion = useCallback((sesion) => {
+    const id = Number(sesion?.usuarioId);
+    if (!Number.isFinite(id) || id <= 0) return;
+    setState((s) => {
+      const cambiaUsuario = s.usuarioId !== id;
+      return {
+        ...s,
+        usuarioId: id,
+        nombre: String(sesion.nombre ?? ''),
+        apellido: String(sesion.apellido ?? ''),
+        email: String(sesion.email ?? ''),
+        sesionActiva: true,
+        favoritos: cambiaUsuario ? [] : s.favoritos,
+        wishlist: cambiaUsuario ? [] : s.wishlist,
+        listaCompras: cambiaUsuario ? [] : s.listaCompras,
+        busquedasRecientes: cambiaUsuario ? [] : s.busquedasRecientes
+      };
+    });
+  }, []);
+
+  const cerrarSesion = useCallback(() => {
+    setState(() => ({
+      ...defaultState
+    }));
+  }, []);
+
   const value = useMemo(() => ({
     ...state,
     setUsuarioId,
@@ -203,7 +237,9 @@ export function UserProvider({ children, syncFavoritos, syncWishlist, syncListaC
     eliminarItemListaCompras,
     limpiarListaCompras,
     registrarBusqueda,
-    limpiarBusquedas
+    limpiarBusquedas,
+    iniciarSesion,
+    cerrarSesion
   }), [
     state,
     setUsuarioId,
@@ -217,7 +253,9 @@ export function UserProvider({ children, syncFavoritos, syncWishlist, syncListaC
     eliminarItemListaCompras,
     limpiarListaCompras,
     registrarBusqueda,
-    limpiarBusquedas
+    limpiarBusquedas,
+    iniciarSesion,
+    cerrarSesion
   ]);
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

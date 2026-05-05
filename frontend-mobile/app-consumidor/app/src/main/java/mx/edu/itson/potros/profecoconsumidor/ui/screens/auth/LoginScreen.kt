@@ -40,7 +40,7 @@ fun LoginScreen(
     vm: AuthViewModel = viewModel()
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
-    var usuario by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     Box(
@@ -83,10 +83,11 @@ fun LoginScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedTextField(
-                            value = usuario,
-                            onValueChange = { usuario = it; vm.limpiarMensajes() },
-                            label = { Text("Usuario") },
+                            value = email,
+                            onValueChange = { email = it.trim(); vm.limpiarMensajes() },
+                            label = { Text("Correo electrónico") },
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             modifier = Modifier.fillMaxWidth()
                         )
                         OutlinedTextField(
@@ -103,7 +104,7 @@ fun LoginScreen(
                         if (ui.okMensaje != null) SuccessBox(ui.okMensaje!!)
 
                         Button(
-                            onClick = { vm.login(usuario, password, onLoginExitoso) },
+                            onClick = { vm.login(email, password, onLoginExitoso) },
                             enabled = !ui.procesando,
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -122,7 +123,7 @@ fun LoginScreen(
 
             item {
                 Text(
-                    "Cuentas demo: usuario 'demo' / contraseña 'demo1234'.",
+                    "Cuenta demo: juan.perez@mail.com / 12345678",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)

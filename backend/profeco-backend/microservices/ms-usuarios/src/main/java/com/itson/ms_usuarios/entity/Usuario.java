@@ -26,6 +26,9 @@ public class Usuario {
     @Column(name = "tipo_usuario", nullable = false, length = 20)
     private String tipoUsuario;
 
+    @Column(nullable = false, length = 120)
+    private String password = "";
+
     @Column(nullable = false)
     private Boolean activo = true;
 
@@ -46,6 +49,8 @@ public class Usuario {
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public String getTipoUsuario() { return tipoUsuario; }
     public void setTipoUsuario(String tipoUsuario) { this.tipoUsuario = tipoUsuario; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
     public Boolean getActivo() { return activo; }
     public void setActivo(Boolean activo) { this.activo = activo; }
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }

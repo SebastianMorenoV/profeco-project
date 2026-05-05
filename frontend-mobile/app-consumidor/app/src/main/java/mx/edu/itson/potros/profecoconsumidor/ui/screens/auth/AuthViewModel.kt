@@ -19,30 +19,37 @@ class AuthViewModel : ViewModel() {
     private val _ui = MutableStateFlow(AuthUiState())
     val ui = _ui.asStateFlow()
 
-    fun login(usuario: String, password: String, onExito: () -> Unit) {
-        if (usuario.isBlank() || password.isBlank()) {
-            _ui.value = AuthUiState(errorMensaje = "Captura usuario y contraseña.")
+    fun login(email: String, password: String, onExito: () -> Unit) {
+        if (email.isBlank() || password.isBlank()) {
+            _ui.value = AuthUiState(errorMensaje = "Captura email y contraseña.")
             return
         }
         _ui.value = AuthUiState(procesando = true)
         viewModelScope.launch {
-            val cuenta = AuthRepository.login(usuario, password)
-            if (cuenta == null) {
-                _ui.value = AuthUiState(errorMensaje = "Usuario o contraseña incorrectos.")
-                return@launch
+            when (val r = ServiceLocator.auth.login(email, password)) {
+                is AuthRepository.Resultado.Ok -> {
+                    val nombreCompleto = listOf(r.cuenta.nombre, r.cuenta.apellido)
+                        .filter { it.isNotBlank() }
+                        .joinToString(" ")
+                        .ifBlank { r.cuenta.email }
+                    ServiceLocator.prefs.iniciarSesion(r.cuenta.usuarioId, nombreCompleto)
+                    ServiceLocator.syncDownFromRemote(r.cuenta.usuarioId)
+                    _ui.value = AuthUiState(okMensaje = "Bienvenido, $nombreCompleto.")
+                    onExito()
+                }
+                is AuthRepository.Resultado.Error ->
+                    _ui.value = AuthUiState(errorMensaje = r.mensaje)
             }
-            ServiceLocator.prefs.iniciarSesion(cuenta.usuarioId, cuenta.nombreCompleto)
-            ServiceLocator.syncDownFromRemote(cuenta.usuarioId)
-            _ui.value = AuthUiState(okMensaje = "Bienvenido, ${cuenta.nombreCompleto}.")
-            onExito()
         }
     }
 
     fun registrar(
-        usuario: String,
+        nombre: String,
+        apellido: String,
+        email: String,
+        telefono: String,
         password: String,
         confirmar: String,
-        nombreCompleto: String,
         onExito: () -> Unit
     ) {
         if (password != confirmar) {
@@ -51,21 +58,19 @@ class AuthViewModel : ViewModel() {
         }
         _ui.value = AuthUiState(procesando = true)
         viewModelScope.launch {
-            when (val r = AuthRepository.registrar(usuario, password, nombreCompleto)) {
+            when (val r = ServiceLocator.auth.registrar(nombre, apellido, email, telefono, password)) {
                 is AuthRepository.Resultado.Ok -> {
-                    ServiceLocator.prefs.iniciarSesion(r.usuarioId, r.nombre)
-                    ServiceLocator.syncDownFromRemote(r.usuarioId)
-                    _ui.value = AuthUiState(okMensaje = "Cuenta creada. Bienvenido, ${r.nombre}.")
+                    val nombreCompleto = listOf(r.cuenta.nombre, r.cuenta.apellido)
+                        .filter { it.isNotBlank() }
+                        .joinToString(" ")
+                        .ifBlank { r.cuenta.email }
+                    ServiceLocator.prefs.iniciarSesion(r.cuenta.usuarioId, nombreCompleto)
+                    ServiceLocator.syncDownFromRemote(r.cuenta.usuarioId)
+                    _ui.value = AuthUiState(okMensaje = "Cuenta creada. Bienvenido, $nombreCompleto.")
                     onExito()
                 }
-                AuthRepository.Resultado.UsuarioYaExiste ->
-                    _ui.value = AuthUiState(errorMensaje = "Ese nombre de usuario ya está registrado.")
-                AuthRepository.Resultado.UsuarioInvalido ->
-                    _ui.value = AuthUiState(errorMensaje = "El usuario debe tener al menos 4 caracteres.")
-                AuthRepository.Resultado.PasswordCorto ->
-                    _ui.value = AuthUiState(errorMensaje = "La contraseña debe tener al menos 6 caracteres.")
-                AuthRepository.Resultado.NombreVacio ->
-                    _ui.value = AuthUiState(errorMensaje = "Captura tu nombre completo.")
+                is AuthRepository.Resultado.Error ->
+                    _ui.value = AuthUiState(errorMensaje = r.mensaje)
             }
         }
     }

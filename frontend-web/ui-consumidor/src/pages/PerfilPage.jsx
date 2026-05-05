@@ -1,59 +1,46 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 
 export function PerfilPage() {
   const {
     usuarioId,
+    nombre,
+    apellido,
+    email,
     favoritos,
     wishlist,
     listaCompras,
     busquedasRecientes,
-    setUsuarioId,
-    limpiarBusquedas
+    limpiarBusquedas,
+    cerrarSesion
   } = useUser();
 
-  const [draftId, setDraftId] = useState(String(usuarioId));
-  const [okMsg, setOkMsg] = useState(null);
+  const nombreCompleto = [nombre, apellido].filter(Boolean).join(' ').trim();
 
-  const guardar = (e) => {
-    e.preventDefault();
-    const num = Number(draftId);
-    if (!Number.isFinite(num) || num <= 0) {
-      setOkMsg(null);
-      return;
-    }
-    setUsuarioId(num);
-    setOkMsg('Identidad actualizada.');
-    setTimeout(() => setOkMsg(null), 2500);
+  const navigate = useNavigate();
+
+  const salir = () => {
+    cerrarSesion();
+    navigate('/login', { replace: true });
   };
 
   return (
     <div className="page">
       <h1>Mi cuenta</h1>
       <p className="muted">
-        Mientras la plataforma habilita el inicio de sesión, identifícate manualmente con tu ID de usuario para que tus reseñas, reportes y listas se asocien correctamente.
+        Tu sesión local guarda tus listas, búsquedas y la identidad con la que envías reseñas y reportes.
       </p>
 
       <div className="grid grid-2">
-        <form className="card resenia-form" onSubmit={guardar}>
-          <h3>Identidad</h3>
-          <label>
-            ID de usuario
-            <input
-              type="number"
-              min={1}
-              value={draftId}
-              onChange={(e) => setDraftId(e.target.value)}
-              required
-            />
-            <span className="muted small">
-              Se persiste en este navegador y se usa al publicar reseñas, reportes y al sincronizar listas.
-            </span>
-          </label>
-          {okMsg && <div className="success-box">{okMsg}</div>}
-          <button type="submit">Guardar</button>
-        </form>
+        <article className="card">
+          <h3>Sesión activa</h3>
+          {nombreCompleto && <p><strong>{nombreCompleto}</strong></p>}
+          {email && <p className="muted small">{email}</p>}
+          <p className="muted small">ID #{usuarioId}</p>
+          <button type="button" className="btn-ghost" onClick={salir}>
+            Cerrar sesión
+          </button>
+        </article>
 
         <article className="card">
           <h3>Mis listas</h3>
