@@ -1,7 +1,6 @@
 package mx.edu.itson.potros.profecoconsumidor.ui.screens.reportar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,6 +36,7 @@ import mx.edu.itson.potros.profecoconsumidor.ui.components.Loader
 import mx.edu.itson.potros.profecoconsumidor.ui.components.SuccessBox
 import mx.edu.itson.potros.profecoconsumidor.util.MOTIVOS_REPORTE
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportarScreen(
     comercioIdInicial: Long = 0L,
@@ -80,20 +80,23 @@ fun ReportarScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Box {
+                    ExposedDropdownMenuBox(
+                        expanded = menuMotivo,
+                        onExpandedChange = { menuMotivo = it }
+                    ) {
                         OutlinedTextField(
                             value = motivoSeleccionado.second,
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Motivo") },
                             trailingIcon = {
-                                Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuMotivo)
                             },
                             modifier = Modifier
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth()
-                                .clickable { menuMotivo = true }
                         )
-                        DropdownMenu(
+                        ExposedDropdownMenu(
                             expanded = menuMotivo,
                             onDismissRequest = { menuMotivo = false }
                         ) {
