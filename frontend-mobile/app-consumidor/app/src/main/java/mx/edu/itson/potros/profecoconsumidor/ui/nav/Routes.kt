@@ -16,6 +16,9 @@ object Routes {
     const val MIS_FAVORITOS = "mis-favoritos"
     const val MI_WISHLIST = "mi-wishlist"
     const val LISTA_COMPRAS = "lista-compras"
+    const val LOGIN = "login"
+    const val REGISTRO = "registro"
+    const val APP_ROOT = "app-root"
 
     fun productos(query: String? = null, categoria: String? = null): String {
         val q = query?.takeIf { it.isNotBlank() } ?: ""

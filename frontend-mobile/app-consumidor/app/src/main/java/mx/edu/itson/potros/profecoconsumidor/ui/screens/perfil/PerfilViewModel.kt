@@ -25,4 +25,11 @@ class PerfilViewModel : ViewModel() {
     fun limpiarBusquedas() {
         viewModelScope.launch { ServiceLocator.prefs.limpiarBusquedas() }
     }
+
+    fun cerrarSesion(onListo: () -> Unit) {
+        viewModelScope.launch {
+            ServiceLocator.prefs.cerrarSesion()
+            onListo()
+        }
+    }
 }

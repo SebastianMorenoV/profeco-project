@@ -17,13 +17,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
+import mx.edu.itson.potros.profecoconsumidor.data.UserPrefsState
 import mx.edu.itson.potros.profecoconsumidor.ui.nav.Routes
+import mx.edu.itson.potros.profecoconsumidor.ui.screens.auth.LoginScreen
+import mx.edu.itson.potros.profecoconsumidor.ui.screens.auth.RegistroScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.comercios.ComercioDetalleScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.comercios.ComerciosScreen
 import mx.edu.itson.potros.profecoconsumidor.ui.screens.favoritos.MisFavoritosScreen
@@ -49,6 +55,49 @@ private val bottomItems = listOf(
 
 @Composable
 fun ProfecoApp() {
+    val rootNav = rememberNavController()
+    val prefs by ServiceLocator.prefs.state.collectAsStateWithLifecycle(initialValue = UserPrefsState())
+
+    val startDestination = if (prefs.sesionActiva) Routes.APP_ROOT else Routes.LOGIN
+
+    NavHost(navController = rootNav, startDestination = startDestination) {
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                onLoginExitoso = {
+                    rootNav.navigate(Routes.APP_ROOT) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onIrARegistro = { rootNav.navigate(Routes.REGISTRO) }
+            )
+        }
+        composable(Routes.REGISTRO) {
+            RegistroScreen(
+                onRegistroExitoso = {
+                    rootNav.navigate(Routes.APP_ROOT) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onVolverALogin = { rootNav.popBackStack() }
+            )
+        }
+        composable(Routes.APP_ROOT) {
+            AppConSesion(
+                onCerrarSesion = {
+                    rootNav.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.APP_ROOT) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppConSesion(onCerrarSesion: () -> Unit) {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route.orEmpty()
@@ -74,94 +123,108 @@ fun ProfecoApp() {
             }
         }
     ) { padding ->
-        NavHost(
-            navController = nav,
-            startDestination = Routes.HOME,
-            modifier = Modifier.padding(padding)
-        ) {
-            composable(Routes.HOME) {
-                HomeScreen(
-                    onBuscar = { q -> nav.navigate(Routes.productos(query = q)) },
-                    onVerOfertas = { nav.navigate(Routes.OFERTAS) },
-                    onVerProductos = { nav.navigate(Routes.productos()) },
-                    onVerComercios = { nav.navigate(Routes.COMERCIOS) },
-                    onVerFavoritos = { nav.navigate(Routes.MIS_FAVORITOS) },
-                    onVerWishlist = { nav.navigate(Routes.MI_WISHLIST) },
-                    onVerListaCompras = { nav.navigate(Routes.LISTA_COMPRAS) }
-                )
-            }
+        AppNavHost(
+            nav = nav,
+            modifier = Modifier.padding(padding),
+            onCerrarSesion = onCerrarSesion
+        )
+    }
+}
 
-            composable(
-                route = Routes.PRODUCTOS,
-                arguments = listOf(
-                    navArgument("query") { type = NavType.StringType; defaultValue = "" },
-                    navArgument("categoria") { type = NavType.StringType; defaultValue = "" }
-                )
-            ) { entry ->
-                val q = entry.arguments?.getString("query").orEmpty()
-                val c = entry.arguments?.getString("categoria").orEmpty()
-                ProductosScreen(
-                    queryInicial = q,
-                    categoriaInicial = c,
-                    onAbrirProducto = { id -> nav.navigate(Routes.productoDetalle(id)) }
-                )
-            }
+@Composable
+private fun AppNavHost(
+    nav: NavHostController,
+    modifier: Modifier,
+    onCerrarSesion: () -> Unit
+) {
+    NavHost(
+        navController = nav,
+        startDestination = Routes.HOME,
+        modifier = modifier
+    ) {
+        composable(Routes.HOME) {
+            HomeScreen(
+                onBuscar = { q -> nav.navigate(Routes.productos(query = q)) },
+                onVerOfertas = { nav.navigate(Routes.OFERTAS) },
+                onVerProductos = { nav.navigate(Routes.productos()) },
+                onVerComercios = { nav.navigate(Routes.COMERCIOS) },
+                onVerFavoritos = { nav.navigate(Routes.MIS_FAVORITOS) },
+                onVerWishlist = { nav.navigate(Routes.MI_WISHLIST) },
+                onVerListaCompras = { nav.navigate(Routes.LISTA_COMPRAS) }
+            )
+        }
 
-            composable(
-                route = Routes.PRODUCTO_DETALLE,
-                arguments = listOf(navArgument("id") { type = NavType.LongType })
-            ) { entry ->
-                val id = entry.arguments?.getLong("id") ?: 0L
-                ProductoDetalleScreen(
-                    productoId = id,
-                    onAbrirComercio = { cid -> nav.navigate(Routes.comercioDetalle(cid)) }
-                )
-            }
+        composable(
+            route = Routes.PRODUCTOS,
+            arguments = listOf(
+                navArgument("query") { type = NavType.StringType; defaultValue = "" },
+                navArgument("categoria") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { entry ->
+            val q = entry.arguments?.getString("query").orEmpty()
+            val c = entry.arguments?.getString("categoria").orEmpty()
+            ProductosScreen(
+                queryInicial = q,
+                categoriaInicial = c,
+                onAbrirProducto = { id -> nav.navigate(Routes.productoDetalle(id)) }
+            )
+        }
 
-            composable(Routes.COMERCIOS) {
-                ComerciosScreen(onAbrirComercio = { id -> nav.navigate(Routes.comercioDetalle(id)) })
-            }
+        composable(
+            route = Routes.PRODUCTO_DETALLE,
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { entry ->
+            val id = entry.arguments?.getLong("id") ?: 0L
+            ProductoDetalleScreen(
+                productoId = id,
+                onAbrirComercio = { cid -> nav.navigate(Routes.comercioDetalle(cid)) }
+            )
+        }
 
-            composable(
-                route = Routes.COMERCIO_DETALLE,
-                arguments = listOf(navArgument("id") { type = NavType.LongType })
-            ) { entry ->
-                val id = entry.arguments?.getLong("id") ?: 0L
-                ComercioDetalleScreen(
-                    comercioId = id,
-                    onReportar = { cid -> nav.navigate(Routes.reportar(cid)) }
-                )
-            }
+        composable(Routes.COMERCIOS) {
+            ComerciosScreen(onAbrirComercio = { id -> nav.navigate(Routes.comercioDetalle(id)) })
+        }
 
-            composable(Routes.OFERTAS) { OfertasScreen() }
+        composable(
+            route = Routes.COMERCIO_DETALLE,
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { entry ->
+            val id = entry.arguments?.getLong("id") ?: 0L
+            ComercioDetalleScreen(
+                comercioId = id,
+                onReportar = { cid -> nav.navigate(Routes.reportar(cid)) }
+            )
+        }
 
-            composable(
-                route = Routes.REPORTAR,
-                arguments = listOf(navArgument("comercioId") { type = NavType.LongType; defaultValue = 0L })
-            ) { entry ->
-                val cid = entry.arguments?.getLong("comercioId") ?: 0L
-                ReportarScreen(comercioIdInicial = cid)
-            }
+        composable(Routes.OFERTAS) { OfertasScreen() }
 
-            composable(Routes.PERFIL) {
-                PerfilScreen(
-                    onVerFavoritos = { nav.navigate(Routes.MIS_FAVORITOS) },
-                    onVerWishlist = { nav.navigate(Routes.MI_WISHLIST) },
-                    onVerListaCompras = { nav.navigate(Routes.LISTA_COMPRAS) }
-                )
-            }
+        composable(
+            route = Routes.REPORTAR,
+            arguments = listOf(navArgument("comercioId") { type = NavType.LongType; defaultValue = 0L })
+        ) { entry ->
+            val cid = entry.arguments?.getLong("comercioId") ?: 0L
+            ReportarScreen(comercioIdInicial = cid)
+        }
 
-            composable(Routes.MIS_FAVORITOS) {
-                MisFavoritosScreen(onAbrirComercio = { id -> nav.navigate(Routes.comercioDetalle(id)) })
-            }
+        composable(Routes.PERFIL) {
+            PerfilScreen(
+                onVerFavoritos = { nav.navigate(Routes.MIS_FAVORITOS) },
+                onVerWishlist = { nav.navigate(Routes.MI_WISHLIST) },
+                onVerListaCompras = { nav.navigate(Routes.LISTA_COMPRAS) },
+                onCerrarSesion = onCerrarSesion
+            )
+        }
 
-            composable(Routes.MI_WISHLIST) {
-                MiWishlistScreen(onAbrirProducto = { id -> nav.navigate(Routes.productoDetalle(id)) })
-            }
+        composable(Routes.MIS_FAVORITOS) {
+            MisFavoritosScreen(onAbrirComercio = { id -> nav.navigate(Routes.comercioDetalle(id)) })
+        }
 
-            composable(Routes.LISTA_COMPRAS) {
-                ListaComprasScreen()
-            }
+        composable(Routes.MI_WISHLIST) {
+            MiWishlistScreen(onAbrirProducto = { id -> nav.navigate(Routes.productoDetalle(id)) })
+        }
+
+        composable(Routes.LISTA_COMPRAS) {
+            ListaComprasScreen()
         }
     }
 }

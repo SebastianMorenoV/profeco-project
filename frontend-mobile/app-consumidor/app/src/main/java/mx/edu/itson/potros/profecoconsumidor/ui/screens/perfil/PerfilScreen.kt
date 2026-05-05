@@ -39,6 +39,7 @@ fun PerfilScreen(
     onVerFavoritos: () -> Unit,
     onVerWishlist: () -> Unit,
     onVerListaCompras: () -> Unit,
+    onCerrarSesion: () -> Unit,
     vm: PerfilViewModel = viewModel()
 ) {
     val prefs by vm.prefs.collectAsStateWithLifecycle(initialValue = UserPrefsState())
@@ -67,8 +68,11 @@ fun PerfilScreen(
         item {
             Tarjeta {
                 Text("Usuario", style = MaterialTheme.typography.titleMedium)
+                if (prefs.usuarioNombre.isNotBlank()) {
+                    Text(prefs.usuarioNombre, fontWeight = FontWeight.Bold)
+                }
                 Text(
-                    "ID que se enviará al backend al crear reseñas y reportes.",
+                    "ID actual #${prefs.usuarioId}. Se envía al backend al crear reseñas y reportes.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -87,6 +91,9 @@ fun PerfilScreen(
                     },
                     enabled = usuarioIdTxt.toLongOrNull()?.let { it > 0 } == true
                 ) { Text("Guardar usuario") }
+                OutlinedButton(
+                    onClick = { vm.cerrarSesion(onCerrarSesion) }
+                ) { Text("Cerrar sesión") }
             }
         }
 

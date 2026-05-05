@@ -59,9 +59,34 @@ class UserPrefs(private val context: Context) {
                 ?.filter { it.isNotBlank() }
                 .orEmpty(),
             listaCompras = decodeListaCompras(p[KEY_LISTA_COMPRAS]),
-            recibioPushes = p[KEY_RECIBIO_PUSHES] ?: false
+            recibioPushes = p[KEY_RECIBIO_PUSHES] ?: false,
+            sesionActiva = p[KEY_SESION_ACTIVA] ?: false,
+            usuarioNombre = p[KEY_USUARIO_NOMBRE].orEmpty()
         )
     }
+
+    suspend fun iniciarSesion(usuarioId: Long, nombre: String) =
+        context.dataStore.edit { p ->
+            val prevId = p[KEY_USUARIO_ID]
+            if (prevId != usuarioId) {
+                p.remove(KEY_FAV_COMERCIOS)
+                p.remove(KEY_WISHLIST)
+                p.remove(KEY_LISTA_COMPRAS)
+            }
+            p[KEY_USUARIO_ID] = usuarioId
+            p[KEY_USUARIO_NOMBRE] = nombre
+            p[KEY_SESION_ACTIVA] = true
+        }
+
+    suspend fun cerrarSesion() =
+        context.dataStore.edit { p ->
+            p[KEY_SESION_ACTIVA] = false
+            p.remove(KEY_USUARIO_NOMBRE)
+            p.remove(KEY_FAV_COMERCIOS)
+            p.remove(KEY_WISHLIST)
+            p.remove(KEY_LISTA_COMPRAS)
+            p.remove(KEY_BUSQUEDAS_RECIENTES)
+        }
 
     suspend fun setUsuarioId(id: Long) =
         context.dataStore.edit { p ->
@@ -199,6 +224,8 @@ class UserPrefs(private val context: Context) {
         private val KEY_BUSQUEDAS_RECIENTES = stringPreferencesKey("busquedas_recientes")
         private val KEY_LISTA_COMPRAS = stringPreferencesKey("lista_compras")
         private val KEY_RECIBIO_PUSHES = booleanPreferencesKey("recibio_pushes")
+        private val KEY_SESION_ACTIVA = booleanPreferencesKey("sesion_activa")
+        private val KEY_USUARIO_NOMBRE = stringPreferencesKey("usuario_nombre")
     }
 }
 
@@ -209,7 +236,9 @@ data class UserPrefsState(
     val wishlist: Set<Long> = emptySet(),
     val busquedasRecientes: List<String> = emptyList(),
     val listaCompras: List<ItemCompra> = emptyList(),
-    val recibioPushes: Boolean = false
+    val recibioPushes: Boolean = false,
+    val sesionActiva: Boolean = false,
+    val usuarioNombre: String = ""
 )
 
 /** Evento de sincronización: UserPrefs lo emite tras tocar local; ServiceLocator lo cablea al backend. */
