@@ -21,7 +21,7 @@ class AuthRepository(private val apiClient: ApiClient) {
 
     suspend fun login(email: String, password: String): Resultado {
         if (email.isBlank() || password.isBlank()) {
-            return Resultado.Error("Captura email y contraseña.")
+            return Resultado.Error("Captura correo y contraseña.")
         }
         return runCatching {
             val resp = apiClient.usuarios.login(LoginRequest(email.trim(), password))
@@ -46,11 +46,13 @@ class AuthRepository(private val apiClient: ApiClient) {
         apellido: String,
         email: String,
         telefono: String,
-        password: String
+        password: String,
+        confirmar: String
     ): Resultado {
         if (nombre.isBlank()) return Resultado.Error("Captura tu nombre.")
-        if (email.isBlank() || !email.contains("@")) return Resultado.Error("Captura un email válido.")
+        if (email.isBlank() || !email.contains("@")) return Resultado.Error("Captura un correo válido.")
         if (password.length < 6) return Resultado.Error("La contraseña debe tener al menos 6 caracteres.")
+        if (password != confirmar) return Resultado.Error("Las contraseñas no coinciden.")
 
         return runCatching {
             val resp = apiClient.usuarios.registrar(
@@ -82,8 +84,8 @@ class AuthRepository(private val apiClient: ApiClient) {
     private fun mapearError(t: Throwable): Resultado.Error {
         if (t is HttpException) {
             return when (t.code()) {
-                409 -> Resultado.Error("Ya existe una cuenta con ese email.")
-                400 -> Resultado.Error("Datos inválidos. Revisa email y contraseña.")
+                409 -> Resultado.Error("Ya existe una cuenta con ese correo.")
+                400 -> Resultado.Error("Datos inválidos. Revisa el correo y la contraseña.")
                 404 -> Resultado.Error("Endpoint no disponible. Verifica que el gateway esté actualizado.")
                 else -> Resultado.Error("Error del servidor (${t.code()}).")
             }

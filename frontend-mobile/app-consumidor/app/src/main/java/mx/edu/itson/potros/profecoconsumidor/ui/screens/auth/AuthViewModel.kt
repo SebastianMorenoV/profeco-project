@@ -21,7 +21,7 @@ class AuthViewModel : ViewModel() {
 
     fun login(email: String, password: String, onExito: () -> Unit) {
         if (email.isBlank() || password.isBlank()) {
-            _ui.value = AuthUiState(errorMensaje = "Captura email y contraseña.")
+            _ui.value = AuthUiState(errorMensaje = "Captura correo y contraseña.")
             return
         }
         _ui.value = AuthUiState(procesando = true)
@@ -52,13 +52,9 @@ class AuthViewModel : ViewModel() {
         confirmar: String,
         onExito: () -> Unit
     ) {
-        if (password != confirmar) {
-            _ui.value = AuthUiState(errorMensaje = "Las contraseñas no coinciden.")
-            return
-        }
         _ui.value = AuthUiState(procesando = true)
         viewModelScope.launch {
-            when (val r = ServiceLocator.auth.registrar(nombre, apellido, email, telefono, password)) {
+            when (val r = ServiceLocator.auth.registrar(nombre, apellido, email, telefono, password, confirmar)) {
                 is AuthRepository.Resultado.Ok -> {
                     val nombreCompleto = listOf(r.cuenta.nombre, r.cuenta.apellido)
                         .filter { it.isNotBlank() }
