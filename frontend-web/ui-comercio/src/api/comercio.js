@@ -12,7 +12,7 @@ export const getOfertasComercio = (idComercio) => client.get(`/api/ofertas/comer
 
 // Comercio
 export const getPerfilComercio = (id) => {
-  const url = `${import.meta.env.VITE_API_BASE_URL}/api/comercios/${id}`;
+  const url = `http://localhost:8082/api/comercios/${id}`;
   return axios.get(url, {
     headers: {
       'Accept': 'application/json'

@@ -160,5 +160,6 @@ services:
 networks:
   profeco-net:
     name: profeco-net
+    external: true
     driver: bridge
 
