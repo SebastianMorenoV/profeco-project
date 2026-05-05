@@ -2,12 +2,13 @@ package com.itson.notificaciones;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 public class NotificacionesApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(NotificacionesApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(NotificacionesApplication.class, args);
+    }
 }

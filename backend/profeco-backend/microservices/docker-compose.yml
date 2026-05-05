@@ -11,7 +11,6 @@
 # ==========================================
 
 services:
-
   ms-catalogo:
     build:
       context: ./ms-catalogo
@@ -145,6 +144,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/multas_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=itson
+      - SPRING_RABBITMQ_HOST=host.docker.internal # <-- ADD THIS LINE
       - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -156,10 +156,31 @@ services:
     restart: unless-stopped
     networks:
       - profeco-net
-
+  notificaciones:
+    build:
+      context: ../infrastructure/notificaciones
+      dockerfile: Dockerfile
+    container_name: notificaciones
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_RABBITMQ_HOST=host.docker.internal
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - JAVA_TOOL_OPTIONS=-Xmx256m -Xms128m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
 networks:
   profeco-net:
     name: profeco-net
     external: true
     driver: bridge
-

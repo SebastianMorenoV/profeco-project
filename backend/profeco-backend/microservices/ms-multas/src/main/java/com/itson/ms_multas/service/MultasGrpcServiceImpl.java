@@ -1,5 +1,7 @@
 package com.itson.ms_multas.service;
 
+import com.itson.ms_multas.config.RabbitMQConfig;
+import com.itson.ms_multas.dto.MultaEventDTO;
 import com.itson.ms_multas.entity.Multa;
 import com.itson.ms_multas.entity.Reporte;
 import com.itson.ms_multas.repository.MultaRepository;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @GrpcService
 public class MultasGrpcServiceImpl extends MultasServiceGrpc.MultasServiceImplBase {
@@ -23,6 +26,8 @@ public class MultasGrpcServiceImpl extends MultasServiceGrpc.MultasServiceImplBa
     @Autowired
     private ReporteRepository reporteRepo;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     // ==================== PING ====================
     @Override
     public void ping(Empty request, StreamObserver<PingResponse> responseObserver) {
@@ -105,20 +110,32 @@ public class MultasGrpcServiceImpl extends MultasServiceGrpc.MultasServiceImplBa
         entity.setMonto(BigDecimal.valueOf(request.getMonto()));
         entity.setEmitidoPorUsuarioId(request.getEmitidoPorUsuarioId());
 
-        // Vincular al reporte si se proporcionó
         if (request.getReporteId() > 0) {
             entity.setReporteId(request.getReporteId());
         }
 
         Multa saved = multaRepo.save(entity);
 
-        // Si viene de un reporte, actualizar el estatus del reporte
         if (request.getReporteId() > 0) {
             reporteRepo.findById(request.getReporteId()).ifPresent(r -> {
                 r.setEstatus("RESUELTA_CON_MULTA");
                 r.setMultaId(saved.getId());
                 reporteRepo.save(r);
             });
+        }
+
+        // 2. ¡ENVÍA EL MENSAJE A RABBITMQ AQUÍ!
+        try {
+            MultaEventDTO evento = new MultaEventDTO(
+                    saved.getComercioId(),
+                    saved.getMotivo(),
+                    saved.getMonto().doubleValue(),
+                    saved.getDescripcion()
+            );
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
+            System.out.println("Mensaje enviado a RabbitMQ!");
+        } catch (Exception e) {
+            System.err.println("Error al enviar a RabbitMQ: " + e.getMessage());
         }
 
         responseObserver.onNext(MultaResponse.newBuilder().setMulta(toProtoMulta(saved)).build());
