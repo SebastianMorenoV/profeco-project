@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { usuariosApi } from '../api';
 
 const STORAGE_KEY = 'profeco_consumidor_v1';
 const DEFAULT_USUARIO_ID = 1;
@@ -45,10 +46,66 @@ export function UserProvider({ children, syncFavoritos, syncWishlist, syncListaC
     writeState(state);
   }, [state]);
 
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const [favs, wish, compras] = await Promise.all([
+          usuariosApi.obtenerComerciosFavoritos(state.usuarioId).catch(() => null),
+          usuariosApi.obtenerWishlist(state.usuarioId).catch(() => null),
+          usuariosApi.obtenerListaCompras(state.usuarioId).catch(() => null)
+        ]);
+        if (cancelado) return;
+
+        setState((s) => {
+          if (s.usuarioId !== state.usuarioId) return s;
+
+          let nextFavs = s.favoritos;
+          if (Array.isArray(favs)) {
+            nextFavs = Array.from(new Set(favs.map(Number).filter(Boolean)));
+          }
+
+          let nextWish = s.wishlist;
+          if (Array.isArray(wish)) {
+            nextWish = Array.from(new Set(wish.map(Number).filter(Boolean)));
+          }
+
+          let nextCompras = s.listaCompras;
+          if (Array.isArray(compras)) {
+            nextCompras = compras.map((it, idx) => ({
+              idLocal: Number(it.idLocal ?? it.id_local ?? idx + 1),
+              nombre: String(it.nombre ?? ''),
+              marcado: Boolean(it.marcado)
+            }));
+          }
+
+          return {
+            ...s,
+            favoritos: nextFavs,
+            wishlist: nextWish,
+            listaCompras: nextCompras
+          };
+        });
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelado = true; };
+  }, [state.usuarioId]);
+
   const setUsuarioId = useCallback((id) => {
     const num = Number(id);
     if (!Number.isFinite(num) || num <= 0) return;
-    setState((s) => ({ ...s, usuarioId: num }));
+    setState((s) => {
+      if (s.usuarioId === num) return s;
+      return {
+        ...s,
+        usuarioId: num,
+        favoritos: [],
+        wishlist: [],
+        listaCompras: []
+      };
+    });
   }, []);
 
   const toggleFavorito = useCallback((comercioId) => {

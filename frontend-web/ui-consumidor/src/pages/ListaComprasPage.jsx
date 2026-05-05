@@ -22,7 +22,7 @@ export function ListaComprasPage() {
       try {
         const remotos = await usuariosApi.obtenerListaCompras(usuarioId);
         if (cancelado) return;
-        if (Array.isArray(remotos) && remotos.length > 0) {
+        if (Array.isArray(remotos)) {
           const items = remotos.map((it, idx) => ({
             idLocal: Number(it.idLocal ?? it.id_local ?? idx + 1),
             nombre: String(it.nombre ?? ''),

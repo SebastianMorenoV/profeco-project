@@ -20,7 +20,7 @@ export function MisFavoritosPage() {
         let ids = favoritos;
         try {
           const remotos = await usuariosApi.obtenerComerciosFavoritos(usuarioId);
-          if (Array.isArray(remotos) && remotos.length > 0) {
+          if (Array.isArray(remotos)) {
             ids = Array.from(new Set([...remotos.map(Number), ...favoritos]));
             if (!cancelado) setFavoritosRemotos(ids);
           }

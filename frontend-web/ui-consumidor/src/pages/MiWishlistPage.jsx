@@ -20,7 +20,7 @@ export function MiWishlistPage() {
         let ids = wishlist;
         try {
           const remotos = await usuariosApi.obtenerWishlist(usuarioId);
-          if (Array.isArray(remotos) && remotos.length > 0) {
+          if (Array.isArray(remotos)) {
             ids = Array.from(new Set([...remotos.map(Number), ...wishlist]));
             if (!cancelado) setWishlistRemota(ids);
           }
