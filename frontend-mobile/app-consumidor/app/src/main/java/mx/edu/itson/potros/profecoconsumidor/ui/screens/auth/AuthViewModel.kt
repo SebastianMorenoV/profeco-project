@@ -3,10 +3,14 @@ package mx.edu.itson.potros.profecoconsumidor.ui.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import mx.edu.itson.potros.profecoconsumidor.data.AuthRepository
 import mx.edu.itson.potros.profecoconsumidor.data.ServiceLocator
+import mx.edu.itson.potros.profecoconsumidor.data.UserPrefs
 
 data class AuthUiState(
     val procesando: Boolean = false,
@@ -18,6 +22,19 @@ class AuthViewModel : ViewModel() {
 
     private val _ui = MutableStateFlow(AuthUiState())
     val ui = _ui.asStateFlow()
+
+    /** URL actual del gateway, observable desde las pantallas de login/registro. */
+    val baseUrl = ServiceLocator.prefs.state
+        .map { it.baseUrl }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserPrefs.DEFAULT_BASE_URL)
+
+    fun actualizarBaseUrl(url: String) {
+        viewModelScope.launch { ServiceLocator.prefs.setBaseUrl(url.trim()) }
+    }
+
+    fun restaurarBaseUrl() {
+        viewModelScope.launch { ServiceLocator.prefs.setBaseUrl(UserPrefs.DEFAULT_BASE_URL) }
+    }
 
     fun login(email: String, password: String, onExito: () -> Unit) {
         if (email.isBlank() || password.isBlank()) {

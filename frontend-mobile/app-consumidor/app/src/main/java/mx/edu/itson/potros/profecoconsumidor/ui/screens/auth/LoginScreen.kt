@@ -1,10 +1,13 @@
 package mx.edu.itson.potros.profecoconsumidor.ui.screens.auth
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +34,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import mx.edu.itson.potros.profecoconsumidor.data.UserPrefs
 import mx.edu.itson.potros.profecoconsumidor.ui.components.ErrorBox
 import mx.edu.itson.potros.profecoconsumidor.ui.components.SuccessBox
 
@@ -40,8 +45,12 @@ fun LoginScreen(
     vm: AuthViewModel = viewModel()
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
+    val baseUrl by vm.baseUrl.collectAsStateWithLifecycle()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var baseUrlTxt by remember(baseUrl) { mutableStateOf(baseUrl) }
+    var mostrarConexion by remember { mutableStateOf(false) }
+    var urlGuardada by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -70,6 +79,71 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp)
                     )
+                }
+            }
+
+            /* ── Sección colapsable: Conexión al gateway ── */
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { mostrarConexion = !mostrarConexion }
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "⚙ Conexión al servidor",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            if (mostrarConexion) "▲" else "▼",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+
+                    AnimatedVisibility(visible = mostrarConexion) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                "URL del gateway móvil (Envoy). Usa 10.0.2.2 desde el emulador, o la IP local de la PC desde un dispositivo físico.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            OutlinedTextField(
+                                value = baseUrlTxt,
+                                onValueChange = { baseUrlTxt = it; urlGuardada = null },
+                                label = { Text("Base URL") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = {
+                                        vm.actualizarBaseUrl(baseUrlTxt)
+                                        urlGuardada = "Conexión actualizada"
+                                    }
+                                ) { Text("Guardar") }
+                                OutlinedButton(
+                                    onClick = {
+                                        baseUrlTxt = UserPrefs.DEFAULT_BASE_URL
+                                        vm.restaurarBaseUrl()
+                                        urlGuardada = "URL restaurada al valor por defecto"
+                                    }
+                                ) { Text("Por defecto") }
+                            }
+                            if (urlGuardada != null) {
+                                SuccessBox(urlGuardada!!)
+                            }
+                        }
+                    }
                 }
             }
 
