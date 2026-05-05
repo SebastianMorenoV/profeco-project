@@ -20,6 +20,7 @@ class ApiClient(baseUrlProvider: () -> String) {
         ignoreUnknownKeys = true
         coerceInputValues = true
         explicitNulls = false
+        isLenient = true
     }
 
     private val okHttp = OkHttpClient.Builder()

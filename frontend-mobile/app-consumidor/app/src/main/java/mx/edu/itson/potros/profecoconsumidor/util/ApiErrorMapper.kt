@@ -29,7 +29,7 @@ object ApiErrorMapper {
             is SSLException         -> "Hubo un problema con la conexión segura del servidor."
             is HttpException        -> mapHttp(t)
             is IOException          -> "Hubo un problema de red. Revisa tu conexión."
-            else                    -> t.message?.takeIf { it.isNotBlank() } ?: fallback
+            else                    -> t.stackTraceToString()
         }
     }
 
