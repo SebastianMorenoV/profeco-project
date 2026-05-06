@@ -99,6 +99,7 @@ public class CatalogoGrpcServiceImpl extends CatalogoServiceGrpc.CatalogoService
                     if (!request.getCategoria().isEmpty()) p.setCategoria(request.getCategoria());
                     if (!request.getCodigoBarras().isEmpty()) p.setCodigoBarras(request.getCodigoBarras());
                     if (!request.getUnidadMedida().isEmpty()) p.setUnidadMedida(request.getUnidadMedida());
+                    if (request.getSetActivo()) p.setActivo(request.getActivo());
 
                     Producto saved = productoRepo.save(p);
                     responseObserver.onNext(ProductoResponse.newBuilder()
@@ -113,6 +114,7 @@ public class CatalogoGrpcServiceImpl extends CatalogoServiceGrpc.CatalogoService
                 }
         );
     }
+
 
     @Override
     public void eliminarProducto(IdRequest request, StreamObserver<MensajeResponse> responseObserver) {

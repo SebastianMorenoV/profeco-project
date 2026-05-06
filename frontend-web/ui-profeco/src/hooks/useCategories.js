@@ -18,9 +18,17 @@ export function useCategories(storageKey, defaults) {
 
   const [items, setItems] = useState(read);
 
-  const persist = useCallback((next) => {
-    setItems(next);
-    localStorage.setItem(storageKey, JSON.stringify(next));
+  const persist = useCallback((nextOrUpdater) => {
+    if (typeof nextOrUpdater === 'function') {
+      setItems((prev) => {
+        const next = nextOrUpdater(prev);
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        return next;
+      });
+    } else {
+      setItems(nextOrUpdater);
+      localStorage.setItem(storageKey, JSON.stringify(nextOrUpdater));
+    }
   }, [storageKey]);
 
   /** Agregar una categoría nueva. */
@@ -67,3 +75,26 @@ export const DEFAULT_MOTIVOS_MULTA = [
 
 export const STORAGE_KEY_TIPOS  = 'profeco_tipos_comercio';
 export const STORAGE_KEY_MOTIVOS = 'profeco_motivos_multa';
+export const STORAGE_KEY_CATEGORIAS_PRODUCTO = 'profeco_categorias_producto';
+export const STORAGE_KEY_UNIDADES_MEDIDA = 'profeco_unidades_medida';
+
+export const DEFAULT_CATEGORIAS_PRODUCTO = [
+  { key: 'ALIMENTOS',   label: 'Alimentos' },
+  { key: 'BEBIDAS',     label: 'Bebidas' },
+  { key: 'HIGIENE',     label: 'Higiene' },
+  { key: 'LIMPIEZA',    label: 'Limpieza' },
+  { key: 'FARMACIA',    label: 'Farmacia' },
+  { key: 'ELECTRONICA', label: 'Electrónica' },
+  { key: 'ROPA',        label: 'Ropa' },
+  { key: 'HOGAR',       label: 'Hogar' },
+  { key: 'OTRO',        label: 'Otro' },
+];
+
+export const DEFAULT_UNIDADES_MEDIDA = [
+  { key: 'PIEZA',     label: 'Pieza' },
+  { key: 'KILOGRAMO', label: 'Kilogramo' },
+  { key: 'LITRO',     label: 'Litro' },
+  { key: 'METRO',     label: 'Metro' },
+  { key: 'PAQUETE',   label: 'Paquete' },
+  { key: 'CAJA',      label: 'Caja' },
+];

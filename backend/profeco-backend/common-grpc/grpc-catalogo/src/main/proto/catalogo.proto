@@ -120,6 +120,8 @@ message ActualizarProductoRequest {
   string categoria = 5;
   string codigo_barras = 6;
   string unidad_medida = 7;
+  bool activo = 8;        // Permite activar/desactivar el producto (toggle de estatus)
+  bool set_activo = 9;   // Flag para indicar que se desea modificar el campo activo
 }
 
 message BuscarProductosRequest {

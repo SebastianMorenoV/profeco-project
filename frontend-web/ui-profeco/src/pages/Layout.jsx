@@ -16,6 +16,7 @@ export function Layout({ usuario, onLogout }) {
             <NavLink to="/reportes">Reportes</NavLink>
             <NavLink to="/multas">Multas</NavLink>
             <NavLink to="/comercios">Comercios</NavLink>
+            <NavLink to="/productos">Productos</NavLink>
             <NavLink to="/usuarios">Usuarios</NavLink>
             <NavLink to="/categorias">Categorías</NavLink>
           </nav>

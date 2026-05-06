@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ReportesPage } from './pages/ReportesPage';
 import { MultasPage } from './pages/MultasPage';
 import { ComerciosPage } from './pages/ComerciosPage';
+import { ProductosPage } from './pages/ProductosPage';
 import { UsuariosPage } from './pages/UsuariosPage';
 import { CategoriasPage } from './pages/CategoriasPage';
 
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="reportes" element={<ReportesPage />} />
           <Route path="multas" element={<MultasPage />} />
           <Route path="comercios" element={<ComerciosPage />} />
+          <Route path="productos" element={<ProductosPage />} />
           <Route path="usuarios" element={<UsuariosPage />} />
           <Route path="categorias" element={<CategoriasPage />} />
           <Route path="*" element={<Navigate to="/reportes" replace />} />

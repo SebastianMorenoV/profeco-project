@@ -3,8 +3,12 @@ import {
   useCategories,
   DEFAULT_TIPOS_COMERCIO,
   DEFAULT_MOTIVOS_MULTA,
+  DEFAULT_CATEGORIAS_PRODUCTO,
+  DEFAULT_UNIDADES_MEDIDA,
   STORAGE_KEY_TIPOS,
-  STORAGE_KEY_MOTIVOS
+  STORAGE_KEY_MOTIVOS,
+  STORAGE_KEY_CATEGORIAS_PRODUCTO,
+  STORAGE_KEY_UNIDADES_MEDIDA
 } from '../hooks/useCategories';
 
 /**
@@ -192,6 +196,8 @@ function CategoryManager({ title, subtitle, items, onAdd, onUpdate, onRemove, on
 export function CategoriasPage() {
   const tipos = useCategories(STORAGE_KEY_TIPOS, DEFAULT_TIPOS_COMERCIO);
   const motivos = useCategories(STORAGE_KEY_MOTIVOS, DEFAULT_MOTIVOS_MULTA);
+  const catProducto = useCategories(STORAGE_KEY_CATEGORIAS_PRODUCTO, DEFAULT_CATEGORIAS_PRODUCTO);
+  const unidades = useCategories(STORAGE_KEY_UNIDADES_MEDIDA, DEFAULT_UNIDADES_MEDIDA);
 
   return (
     <div className="page">
@@ -199,7 +205,7 @@ export function CategoriasPage() {
         <h1>Gestión de Categorías</h1>
       </div>
       <p className="muted">
-        Administra los tipos de comercio y motivos de multa que se usan en los formularios del sistema.
+        Administra las categorías que se usan en los formularios del sistema.
         Los cambios se guardan automáticamente y se reflejan en todas las páginas.
       </p>
 
@@ -221,6 +227,26 @@ export function CategoriasPage() {
         onUpdate={motivos.update}
         onRemove={motivos.remove}
         onReset={motivos.reset}
+      />
+
+      <CategoryManager
+        title="Categorías de Producto"
+        subtitle="Se usan al dar de alta un producto en el catálogo."
+        items={catProducto.items}
+        onAdd={catProducto.add}
+        onUpdate={catProducto.update}
+        onRemove={catProducto.remove}
+        onReset={catProducto.reset}
+      />
+
+      <CategoryManager
+        title="Unidades de Medida"
+        subtitle="Se usan al registrar un producto en el catálogo."
+        items={unidades.items}
+        onAdd={unidades.add}
+        onUpdate={unidades.update}
+        onRemove={unidades.remove}
+        onReset={unidades.reset}
       />
     </div>
   );
