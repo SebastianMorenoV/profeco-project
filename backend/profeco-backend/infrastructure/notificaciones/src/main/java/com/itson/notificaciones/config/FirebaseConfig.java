@@ -19,7 +19,7 @@ public class FirebaseConfig {
     private String credentialsPath;
 
     @PostConstruct
-    public void init() throws Exception {
+    public void init() {
         if (FirebaseApp.getApps().isEmpty()) {
             try (InputStream stream = new ClassPathResource(credentialsPath).getInputStream()) {
                 FirebaseOptions options = FirebaseOptions.builder()
@@ -27,12 +27,17 @@ public class FirebaseConfig {
                         .build();
                 FirebaseApp.initializeApp(options);
                 System.out.println("✅ Firebase Admin SDK inicializado.");
+            } catch (Exception e) {
+                System.err.println("⚠️ Advertencia: No se pudo inicializar Firebase Admin SDK. Ignorando error para desarrollo/tests. Detalle: " + e.getMessage());
             }
         }
     }
 
     @Bean
     public FirebaseMessaging firebaseMessaging() {
+        if (FirebaseApp.getApps().isEmpty()) {
+            return null;
+        }
         return FirebaseMessaging.getInstance();
     }
 }

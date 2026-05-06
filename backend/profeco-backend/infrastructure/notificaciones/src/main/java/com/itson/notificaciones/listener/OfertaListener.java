@@ -25,7 +25,7 @@ public class OfertaListener {
     @Value("${profeco.fcm.fallback-topic:ofertas-nuevas}")
     private String fallbackTopic;
 
-    @Autowired
+    @Autowired(required = false)
     private FirebaseMessaging firebaseMessaging;
 
     @GrpcClient("ms-usuarios")
@@ -72,6 +72,11 @@ public class OfertaListener {
     }
 
     private void enviarPushAlTopic(OfertaEventDTO oferta) {
+        if (firebaseMessaging == null) {
+            System.err.println("⚠️ Push FCM al topic omitido (FirebaseMessaging no disponible).");
+            return;
+        }
+
         Datos d = construirDatos(oferta);
 
         Message mensaje = Message.builder()
@@ -89,6 +94,11 @@ public class OfertaListener {
     }
 
     private void enviarPushPorTokens(OfertaEventDTO oferta, List<String> tokens) {
+        if (firebaseMessaging == null) {
+            System.err.println("⚠️ Push FCM por tokens omitido (FirebaseMessaging no disponible).");
+            return;
+        }
+
         Datos d = construirDatos(oferta);
 
         // FCM acepta hasta 500 tokens por sendEachForMulticast.

@@ -8,9 +8,13 @@ export default function RegistrarPreciosPage({ comercioId }) {
   const [misPrecios, setMisPrecios] = useState([]);
   const [cargando, setCargando] = useState(true);
   
-  // Estado para el formulario
+  // Estado para el formulario de nuevo precio
   const [productoSeleccionado, setProductoSeleccionado] = useState("");
   const [precioInput, setPrecioInput] = useState("");
+
+  // Estado para la edición de precios existentes
+  const [editandoId, setEditandoId] = useState(null);
+  const [precioEditado, setPrecioEditado] = useState("");
 
   useEffect(() => {
     cargarDatos();
@@ -36,17 +40,20 @@ export default function RegistrarPreciosPage({ comercioId }) {
     }
   };
 
+  // Calculamos los productos disponibles (los que el comercio AÚN NO tiene registrados)
+  const productosDisponibles = productos.filter(
+    p => !misPrecios.find(mp => mp.productoId === p.id)
+  );
+
+  // Aplicamos la búsqueda a los productos disponibles
+  const productosParaSelect = productosDisponibles.filter(p => {
+    const term = busqueda.toLowerCase().trim();
+    if (!term) return true;
+    return p.nombre?.toLowerCase().includes(term) || p.marca?.toLowerCase().includes(term);
+  });
+
   const manejarBusqueda = (e) => {
-    const term = e.target.value.toLowerCase();
-    setBusqueda(term);
-    if(term.trim() === '') {
-      setProductosFiltrados(productos);
-    } else {
-      setProductosFiltrados(productos.filter(p => 
-        p.nombre?.toLowerCase().includes(term) || 
-        p.marca?.toLowerCase().includes(term)
-      ));
-    }
+    setBusqueda(e.target.value);
   };
 
   const manejarGuardarPrecio = async (e) => {
@@ -56,19 +63,9 @@ export default function RegistrarPreciosPage({ comercioId }) {
     const productoId = parseInt(productoSeleccionado);
     const precio = parseFloat(precioInput);
 
-    // Buscamos si este comercio ya le había puesto precio a este producto
-    const precioExistente = misPrecios.find(p => p.productoId === productoId);
-
     try {
-      if (precioExistente) {
-        // ACTUALIZAR (PUT)
-        await actualizarPrecio(precioExistente.id, { precio });
-        alert("¡Precio actualizado con éxito!");
-      } else {
-        // CREAR (POST)
-        await registrarPrecio({ productoId, comercioId: comercioId, precio });
-        alert("¡Nuevo precio registrado en el catálogo!");
-      }
+      await registrarPrecio({ productoId, comercioId: comercioId, precio });
+      alert("¡Nuevo precio registrado en el catálogo!");
       
       // Limpiar formulario y recargar tabla
       setProductoSeleccionado("");
@@ -78,6 +75,24 @@ export default function RegistrarPreciosPage({ comercioId }) {
     } catch (error) {
       console.error("Error al guardar:", error);
       alert("Hubo un error al guardar el precio.");
+    }
+  };
+
+  const iniciarEdicion = (precioObj) => {
+    setEditandoId(precioObj.id);
+    setPrecioEditado(precioObj.precio);
+  };
+
+  const guardarEdicion = async (precioId) => {
+    if (!precioEditado) return;
+    try {
+      await actualizarPrecio(precioId, { precio: parseFloat(precioEditado) });
+      alert("¡Precio actualizado con éxito!");
+      setEditandoId(null);
+      cargarDatos();
+    } catch (error) {
+      console.error("Error al actualizar:", error);
+      alert("Hubo un error al actualizar el precio.");
     }
   };
 
@@ -112,7 +127,7 @@ export default function RegistrarPreciosPage({ comercioId }) {
               onChange={(e) => setProductoSeleccionado(e.target.value)}
             >
               <option value="">-- Selecciona un producto para vender --</option>
-              {productosFiltrados.map(p => (
+              {productosParaSelect.map(p => (
                 <option key={p.id} value={p.id}>
                   {p.nombre} - {p.marca} ({p.unidadMedida})
                 </option>
@@ -151,6 +166,7 @@ export default function RegistrarPreciosPage({ comercioId }) {
                 <th style={styles.th}>Producto</th>
                 <th style={styles.th}>Precio Actual</th>
                 <th style={styles.th}>Última Actualización</th>
+                <th style={styles.th}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -158,8 +174,30 @@ export default function RegistrarPreciosPage({ comercioId }) {
                 <tr key={p.id} style={styles.tr}>
                   <td style={styles.td}>#{p.id}</td>
                   <td style={styles.td}>{getNombreProducto(p.productoId)}</td>
-                  <td style={styles.td}>${p.precio.toFixed(2)}</td>
+                  <td style={styles.td}>
+                    {editandoId === p.id ? (
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        style={{...styles.input, width: '100px', padding: '0.5rem'}}
+                        value={precioEditado}
+                        onChange={(e) => setPrecioEditado(e.target.value)}
+                      />
+                    ) : (
+                      `$${p.precio.toFixed(2)}`
+                    )}
+                  </td>
                   <td style={styles.td}>{p.fechaReporte ? p.fechaReporte.split('T')[0] : 'N/A'}</td>
+                  <td style={styles.td}>
+                    {editandoId === p.id ? (
+                      <div style={{display: 'flex', gap: '0.5rem'}}>
+                        <button style={{...styles.actionBtn, backgroundColor: '#10b981'}} onClick={() => guardarEdicion(p.id)}>Guardar</button>
+                        <button style={{...styles.actionBtn, backgroundColor: '#ef4444'}} onClick={() => setEditandoId(null)}>Cancelar</button>
+                      </div>
+                    ) : (
+                      <button style={{...styles.actionBtn, backgroundColor: '#3b82f6'}} onClick={() => iniciarEdicion(p)}>Actualizar Precio</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -185,5 +223,6 @@ const styles = {
   th: { backgroundColor: '#f9fafb', padding: '1rem', fontWeight: '600', color: '#4b5563', borderBottom: '1px solid #e5e7eb' },
   tr: { borderBottom: '1px solid #e5e7eb' },
   td: { padding: '1rem', color: '#111827' },
-  noData: { color: '#6b7280', fontStyle: 'italic' }
+  noData: { color: '#6b7280', fontStyle: 'italic' },
+  actionBtn: { padding: '0.5rem 1rem', color: '#fff', border: 'none', borderRadius: '0.375rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.875rem' }
 };
