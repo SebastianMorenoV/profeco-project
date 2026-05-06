@@ -42,6 +42,8 @@ public class OfertasGrpcServiceImpl extends OfertasServiceGrpc.OfertasServiceImp
         entity.setPorcentajeDescuento(BigDecimal.valueOf(request.getPorcentajeDescuento()));
         entity.setFechaInicio(LocalDate.parse(request.getFechaInicio()));
         entity.setFechaFin(LocalDate.parse(request.getFechaFin()));
+        if (!request.getTipoPromocion().isEmpty()) entity.setTipoPromocion(request.getTipoPromocion());
+        if (request.getProductoId() > 0) entity.setProductoId(request.getProductoId());
 
         Oferta saved = ofertaRepo.save(entity);
 
@@ -53,7 +55,9 @@ public class OfertasGrpcServiceImpl extends OfertasServiceGrpc.OfertasServiceImp
                     saved.getDescripcion(),
                     saved.getPrecioOriginal().doubleValue(),
                     saved.getPrecioOferta().doubleValue(),
-                    saved.getPorcentajeDescuento().doubleValue()
+                    saved.getPorcentajeDescuento().doubleValue(),
+                    saved.getTipoPromocion(),
+                    saved.getProductoId()
             );
             rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, evento);
         } catch (Exception e) {
@@ -99,6 +103,8 @@ public class OfertasGrpcServiceImpl extends OfertasServiceGrpc.OfertasServiceImp
                     if (request.getPorcentajeDescuento() > 0) o.setPorcentajeDescuento(BigDecimal.valueOf(request.getPorcentajeDescuento()));
                     if (!request.getFechaInicio().isEmpty()) o.setFechaInicio(LocalDate.parse(request.getFechaInicio()));
                     if (!request.getFechaFin().isEmpty()) o.setFechaFin(LocalDate.parse(request.getFechaFin()));
+                    if (!request.getTipoPromocion().isEmpty()) o.setTipoPromocion(request.getTipoPromocion());
+                    if (request.getProductoId() > 0) o.setProductoId(request.getProductoId());
 
                     Oferta saved = ofertaRepo.save(o);
                     responseObserver.onNext(OfertaResponse.newBuilder().setOferta(toProto(saved)).build());
@@ -146,6 +152,8 @@ public class OfertasGrpcServiceImpl extends OfertasServiceGrpc.OfertasServiceImp
                 .setFechaFin(e.getFechaFin().toString())
                 .setActiva(e.getActiva())
                 .setFechaCreacion(e.getFechaCreacion().toString())
+                .setTipoPromocion(e.getTipoPromocion() != null ? e.getTipoPromocion() : "")
+                .setProductoId(e.getProductoId() != null ? e.getProductoId() : 0)
                 .build();
     }
 }

@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react';
 import { getProductos, crearOferta, getOfertasComercio } from '../api/comercio';
 import { getPreciosPorComercio } from '../api/catalogo';
 
+const TIPOS_PROMOCION = [
+  { value: '2x1', label: '2x1 — Lleva 2, paga 1' },
+  { value: '3x2', label: '3x2 — Lleva 3, paga 2' },
+  { value: 'COMBO', label: 'Combo — Paquete especial' },
+  { value: 'PORCENTAJE', label: 'Descuento por porcentaje' },
+  { value: 'PRECIO_ESPECIAL', label: 'Precio especial directo' },
+  { value: 'OTRO', label: 'Otro tipo de promoción' },
+];
+
 export default function CrearOfertasPage({ comercioId }) {
   const [productos, setProductos] = useState([]);
   const [misOfertas, setMisOfertas] = useState([]);
@@ -13,7 +22,9 @@ export default function CrearOfertasPage({ comercioId }) {
     descripcion: '',
     precioOferta: '',
     precioOriginal: '',
-    fechaFin: ''
+    fechaFin: '',
+    tipoPromocion: '',
+    productoIdFlexible: '',
   });
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
@@ -44,6 +55,7 @@ export default function CrearOfertasPage({ comercioId }) {
         id: of.id,
         producto: of.titulo,
         precioOferta: of.precio_oferta || of.precioOferta || 0,
+        tipoPromocion: of.tipo_promocion || of.tipoPromocion || '',
         fechaFin: of.fecha_fin || of.fechaFin || '---'
       })));
     } catch (error) { console.error("Error al cargar:", error); }
@@ -51,13 +63,21 @@ export default function CrearOfertasPage({ comercioId }) {
 
   useEffect(() => { cargarDatos(); }, []);
 
-
   const handleProductoChange = (idProducto) => {
     const prod = productos.find(p => p.id.toString() === idProducto.toString());
     setForm({
       ...form,
       idProducto,
       precioOriginal: prod ? prod.precio.toString() : ''
+    });
+  };
+
+  const handleProductoFlexibleChange = (productoIdFlexible) => {
+    const prod = productos.find(p => p.id.toString() === productoIdFlexible.toString());
+    setForm({
+      ...form,
+      productoIdFlexible,
+      precioOriginal: prod ? prod.precio.toString() : form.precioOriginal
     });
   };
 
@@ -81,29 +101,38 @@ export default function CrearOfertasPage({ comercioId }) {
       };
 
       if (esFlexible) {
-        payload.titulo = form.titulo;
-        payload.descripcion = form.descripcion;
+        const tipoLabel = TIPOS_PROMOCION.find(t => t.value === form.tipoPromocion)?.label || form.tipoPromocion;
+        const prod = productos.find(p => p.id.toString() === form.productoIdFlexible?.toString());
+        const productoNombre = prod?.nombre || '';
+
+        payload.titulo = form.titulo || `${tipoLabel}${productoNombre ? ': ' + productoNombre : ''}`;
+        payload.descripcion = form.descripcion || `Promoción ${tipoLabel} en sucursal.`;
+        payload.tipo_promocion = form.tipoPromocion;
+        payload.producto_id = form.productoIdFlexible ? parseInt(form.productoIdFlexible) : 0;
       } else {
         const prod = productos.find(p => p.id.toString() === form.idProducto.toString());
         payload.titulo = `Oferta: ${prod?.nombre || 'Producto'}`;
         payload.descripcion = `Precio especial directo en sucursal.`;
+        payload.tipo_promocion = 'DESCUENTO';
+        payload.producto_id = parseInt(form.idProducto) || 0;
       }
 
       await crearOferta(payload);
       setMensaje({ texto: 'Oferta publicada con éxito 🎉. Notificación push enviada a consumidores.', tipo: 'exito' });
-      setForm({ idProducto: '', titulo: '', descripcion: '', precioOferta: '', precioOriginal: '', fechaFin: '' });
+      setForm({ idProducto: '', titulo: '', descripcion: '', precioOferta: '', precioOriginal: '', fechaFin: '', tipoPromocion: '', productoIdFlexible: '' });
       cargarDatos();
     } catch (error) {
       setMensaje({ texto: 'Error al conectar con el servicio.', tipo: 'error' });
     } finally { setEnviando(false); }
   };
 
-
   const precioOrigNum = parseFloat(form.precioOriginal) || 0;
   const precioOfertaNum = parseFloat(form.precioOferta) || 0;
   const descuentoPreview = precioOrigNum > 0 && precioOfertaNum > 0
     ? Math.round(((precioOrigNum - precioOfertaNum) / precioOrigNum) * 10000) / 100
     : 0;
+
+  const tipoSeleccionado = TIPOS_PROMOCION.find(t => t.value === form.tipoPromocion);
 
   return (
     <div>
@@ -147,12 +176,42 @@ export default function CrearOfertasPage({ comercioId }) {
               </>
             ) : (
               <>
+                {/* Tipo de Promoción */}
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Título (ej. 3x2 en Leche)</label>
+                  <label style={styles.label}>Tipo de Promoción</label>
+                  <select style={styles.input} value={form.tipoPromocion} onChange={e => setForm({ ...form, tipoPromocion: e.target.value })} required>
+                    <option value="">-- Selecciona el tipo --</option>
+                    {TIPOS_PROMOCION.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+
+                {tipoSeleccionado && (
+                  <div style={styles.tipoBanner}>
+                    Tipo seleccionado: <strong>{tipoSeleccionado.label}</strong>
+                  </div>
+                )}
+
+                {/* Producto asociado (opcional) */}
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Producto Asociado</label>
+                  <select style={styles.input} value={form.productoIdFlexible} onChange={e => handleProductoFlexibleChange(e.target.value)}>
+                    <option value="">-- Sin producto asociado (opcional) --</option>
+                    {productos.map(p => <option key={p.id} value={p.id}>{p.nombre} (${p.precio.toFixed(2)})</option>)}
+                  </select>
+                </div>
+
+                {form.productoIdFlexible && (
+                  <div style={styles.infoBanner}>
+                    Precio del producto: <strong>${parseFloat(form.precioOriginal).toFixed(2)}</strong>
+                  </div>
+                )}
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Título de la Promoción (ej. 3x2 en Leche Alpura)</label>
                   <input type="text" style={styles.input} value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} required />
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Descripción de la regla</label>
+                  <label style={styles.label}>Descripción / Reglas de la promoción</label>
                   <textarea style={styles.textArea} value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} required />
                 </div>
                 <div style={styles.formGroup}>
@@ -191,6 +250,7 @@ export default function CrearOfertasPage({ comercioId }) {
             <thead>
               <tr>
                 <th style={styles.th}>Descripción</th>
+                <th style={styles.th}>Tipo</th>
                 <th style={styles.th}>Precio</th>
                 <th style={styles.th}>Acción</th>
               </tr>
@@ -199,6 +259,13 @@ export default function CrearOfertasPage({ comercioId }) {
               {misOfertas.map(of => (
                 <tr key={of.id} style={styles.tr}>
                   <td style={styles.td}>{of.producto}</td>
+                  <td style={styles.td}>
+                    {of.tipoPromocion ? (
+                      <span style={styles.tipoBadge}>{of.tipoPromocion}</span>
+                    ) : (
+                      <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>—</span>
+                    )}
+                  </td>
                   <td style={{ ...styles.td, color: '#10b981', fontWeight: 'bold' }}>${of.precioOferta.toFixed(2)}</td>
                   <td style={styles.td}><span style={{ color: '#ef4444', cursor: 'pointer' }}>Cancelar</span></td>
                 </tr>
@@ -226,6 +293,8 @@ const styles = {
   button: { width: '100%', padding: '0.75rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '0.3rem', fontWeight: '600', cursor: 'pointer' },
   infoBanner: { background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.3rem', padding: '0.5rem 0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#1e40af' },
   discountBanner: { background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.3rem', padding: '0.5rem 0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#166534' },
+  tipoBanner: { background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '0.3rem', padding: '0.5rem 0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#92400e' },
+  tipoBadge: { display: 'inline-block', padding: '0.15rem 0.5rem', background: '#dbeafe', color: '#1e40af', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600' },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { textAlign: 'left', padding: '0.5rem', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem' },
   tr: { borderBottom: '1px solid #f3f4f6' },

@@ -86,6 +86,8 @@ message PublicarOfertaRequest {
   double porcentaje_descuento = 6;
   string fecha_inicio = 7; // formato: YYYY-MM-DD
   string fecha_fin = 8;
+  string tipo_promocion = 9;  // DESCUENTO, 2x1, 3x2, COMBO, etc.
+  int64 producto_id = 10;     // 0 = sin producto asociado
 }
 
 message ActualizarOfertaRequest {
@@ -97,6 +99,8 @@ message ActualizarOfertaRequest {
   double porcentaje_descuento = 6;
   string fecha_inicio = 7;
   string fecha_fin = 8;
+  string tipo_promocion = 9;
+  int64 producto_id = 10;
 }
 
 message ListarOfertasRequest {
@@ -115,6 +119,8 @@ message Oferta {
   string fecha_fin = 9;
   bool activa = 10;
   string fecha_creacion = 11;
+  string tipo_promocion = 12;  // DESCUENTO, 2x1, 3x2, COMBO, etc.
+  int64 producto_id = 13;      // 0 = sin producto asociado
 }
 
 message OfertaResponse {

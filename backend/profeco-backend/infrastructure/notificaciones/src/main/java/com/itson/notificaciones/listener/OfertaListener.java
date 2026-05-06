@@ -41,6 +41,8 @@ public class OfertaListener {
         System.out.println("Precio Anterior: $" + oferta.getPrecioOriginal());
         System.out.println("🔥 Precio OFERTA: $" + oferta.getPrecioOferta());
         System.out.println("📉 Descuento: " + oferta.getPorcentajeDescuento() + "%");
+        System.out.println("🏷️ Tipo Promoción: " + (oferta.getTipoPromocion() != null ? oferta.getTipoPromocion() : "N/A"));
+        System.out.println("📦 Producto ID: " + (oferta.getProductoId() != null ? oferta.getProductoId() : "Sin asociar"));
 
         List<String> tokens = resolverTokens(oferta.getComercioId());
         if (tokens.isEmpty()) {
@@ -125,6 +127,8 @@ public class OfertaListener {
         data.put("precioOriginal", String.valueOf(oferta.getPrecioOriginal()));
         data.put("precioOferta", String.valueOf(oferta.getPrecioOferta()));
         data.put("porcentajeDescuento", String.valueOf(oferta.getPorcentajeDescuento()));
+        data.put("tipoPromocion", oferta.getTipoPromocion() != null ? oferta.getTipoPromocion() : "");
+        data.put("productoId", oferta.getProductoId() != null ? String.valueOf(oferta.getProductoId()) : "0");
         return new Datos(titulo, cuerpo, data);
     }
 

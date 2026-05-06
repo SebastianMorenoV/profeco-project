@@ -43,6 +43,12 @@ public class Oferta {
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
+    @Column(name = "tipo_promocion", length = 50)
+    private String tipoPromocion;
+
+    @Column(name = "producto_id")
+    private Long productoId;
+
     public Oferta() {}
 
     public Long getId() { return id; }
@@ -67,4 +73,8 @@ public class Oferta {
     public void setActiva(Boolean activa) { this.activa = activa; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+    public String getTipoPromocion() { return tipoPromocion; }
+    public void setTipoPromocion(String tipoPromocion) { this.tipoPromocion = tipoPromocion; }
+    public Long getProductoId() { return productoId; }
+    public void setProductoId(Long productoId) { this.productoId = productoId; }
 }
