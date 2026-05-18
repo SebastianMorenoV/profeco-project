@@ -86,13 +86,13 @@ export default function CrearOfertasPage({ comercioId }) {
     setEnviando(true);
     try {
       const precioOriginal = parseFloat(form.precioOriginal) || 0;
-      const precioOferta = parseFloat(form.precioOferta);
+      const precioOferta = parseFloat(form.precioOferta) || 0;
       const porcentajeDescuento = precioOriginal > 0
         ? ((precioOriginal - precioOferta) / precioOriginal) * 100
         : 0;
 
       let payload = {
-        comercio_id: comercioId,
+        comercio_id: parseInt(comercioId, 10),
         precio_oferta: precioOferta,
         fecha_inicio: new Date().toISOString().split('T')[0],
         fecha_fin: form.fechaFin,

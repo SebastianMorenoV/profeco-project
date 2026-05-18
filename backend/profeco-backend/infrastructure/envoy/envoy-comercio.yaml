@@ -105,15 +105,14 @@ static_resources:
       dns_lookup_family: V4_ONLY
       # Forzamos a Envoy a comunicarse con el Java usando HTTP/2 (requerido por gRPC)
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
-      # host.docker.internal es la forma en que el contenedor Docker accede a "localhost" de tu Windows
-      load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: host.docker.internal, port_value: 9092 } } } }] }] }    
+      load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-comercio, port_value: 9092 } } } }] }] }    
+    
     # Cluster del MS Catálogo (corre en el puerto 9091)
     - name: ms-catalogo
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
-      # ✅ CORRECCIÓN AQUÍ: Se cambió host.docker.internal por ms-catalogo
       load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-catalogo, port_value: 9091 } } } }] }] }
 
     # Cluster del MS Ofertas (corre en el puerto 9095)
@@ -147,5 +146,3 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-multas, port_value: 9097 } } } }] }] }
-
-

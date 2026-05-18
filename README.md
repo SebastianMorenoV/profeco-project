@@ -48,7 +48,7 @@ Para compilar y ejecutar el ecosistema en un entorno local, requieres:
 
 ---
 
-## Guía Súper Completa de Despliegue Local
+## Guía para Despliegue Local
 
 El proyecto está diseñado para levantarse íntegramente a través de Docker Compose. Todas las dependencias de Java (Maven) y web (Node/React) se descargan y compilan automáticamente dentro de los contenedores Docker usando "Multi-stage builds".
 

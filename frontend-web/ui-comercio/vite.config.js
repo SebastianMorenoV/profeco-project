@@ -11,5 +11,14 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  preview: {
+    proxy: {
+      '/api': {
+        target: 'http://gateway-comercio:8082',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   }
-})
+})
