@@ -1,0 +1,43 @@
+# ==========================================
+# NODO: GATEWAY COMERCIO
+# ==========================================
+# Frontend React (UIComercio) + Envoy Proxy (EnrutadorComercio).
+# Usado por los comercios para gestionar sus establecimientos,
+# productos y ofertas.
+#
+# Puertos expuestos:
+#   - 3003 → Frontend React (UIComercio)
+#   - 8082 → Envoy Proxy (REST → gRPC)
+#
+# Uso:
+#   docker compose -f docker-compose.gateway-comercio.yml up -d --build
+# ==========================================
+
+services:
+  ui-comercio:
+    build:
+      context: ../frontend-web/ui-comercio
+      dockerfile: Dockerfile
+    container_name: ui-comercio
+    ports:
+      - "3003:4173"
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  gateway-comercio:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: gateway-comercio
+    ports:
+      - "8082:8082"
+    volumes:
+      - ../backend/profeco-backend/infrastructure/envoy/envoy-comercio.yaml:/etc/envoy/envoy.yaml:ro
+      - ../backend/profeco-backend/infrastructure/envoy/proto:/etc/envoy/proto:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "--service-cluster", "gateway-comercio"]
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+networks:
+  profeco-net:
+    external: true

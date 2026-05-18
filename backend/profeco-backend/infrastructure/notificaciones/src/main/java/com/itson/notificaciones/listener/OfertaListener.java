@@ -25,7 +25,7 @@ public class OfertaListener {
     @Value("${profeco.fcm.fallback-topic:ofertas-nuevas}")
     private String fallbackTopic;
 
-    @Autowired(required = false)
+    @Autowired
     private FirebaseMessaging firebaseMessaging;
 
     @GrpcClient("ms-usuarios")

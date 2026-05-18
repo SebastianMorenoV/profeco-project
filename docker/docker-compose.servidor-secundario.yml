@@ -1,0 +1,113 @@
+# ==========================================
+# NODO: SERVIDOR SECUNDARIO
+# ==========================================
+# Microservicios de menor concurrencia + sus bases de datos MySQL.
+# Maneja ofertas y reseñas de consumidores.
+#
+# Microservicios:
+#   - ms-ofertas   (HTTP: 8095, gRPC: 9095) → ofertas_db
+#   - ms-resenias  (HTTP: 8094, gRPC: 9094) → resenias_db
+#
+# Uso:
+#   docker compose -f docker-compose.servidor-secundario.yml up -d --build
+# ==========================================
+
+services:
+
+  # ==========================================
+  # BASES DE DATOS
+  # ==========================================
+
+  db-ofertas:
+    image: mysql:8.0
+    container_name: db-ofertas
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-itson}
+      MYSQL_DATABASE: ofertas_db
+    volumes:
+      - db-ofertas-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  db-resenias:
+    image: mysql:8.0
+    container_name: db-resenias
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-itson}
+      MYSQL_DATABASE: resenias_db
+    volumes:
+      - db-resenias-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  # ==========================================
+  # MICROSERVICIOS
+  # ==========================================
+
+  ms-ofertas:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-ofertas/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-ofertas:3306/ofertas_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-ofertas:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  ms-resenias:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-resenias/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-resenias:3306/resenias_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-resenias:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+volumes:
+  db-ofertas-data:
+  db-resenias-data:
+
+networks:
+  profeco-net:
+    external: true

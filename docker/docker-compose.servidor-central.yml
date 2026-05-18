@@ -1,0 +1,195 @@
+# ==========================================
+# NODO: SERVIDOR CENTRAL
+# ==========================================
+# Microservicios de alta concurrencia + sus bases de datos MySQL.
+# Contiene los servicios core del sistema PROFECO.
+#
+# Microservicios:
+#   - ms-catalogo  (HTTP: 8091, gRPC: 9091) → catalogo_db
+#   - ms-comercio  (HTTP: 8092, gRPC: 9092) → comercio_db
+#   - ms-usuarios  (HTTP: 8096, gRPC: 9096) → usuarios_db
+#   - ms-multas    (HTTP: 8097, gRPC: 9097) → multas_db
+#
+# Uso:
+#   docker compose -f docker-compose.servidor-central.yml up -d --build
+# ==========================================
+
+services:
+
+  # ==========================================
+  # BASES DE DATOS
+  # ==========================================
+
+  db-catalogo:
+    image: mysql:8.0
+    container_name: db-catalogo
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-itson}
+      MYSQL_DATABASE: catalogo_db
+    volumes:
+      - db-catalogo-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  db-comercio:
+    image: mysql:8.0
+    container_name: db-comercio
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-itson}
+      MYSQL_DATABASE: comercio_db
+    volumes:
+      - db-comercio-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  db-usuarios:
+    image: mysql:8.0
+    container_name: db-usuarios
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-itson}
+      MYSQL_DATABASE: usuarios_db
+    volumes:
+      - db-usuarios-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  db-multas:
+    image: mysql:8.0
+    container_name: db-multas
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-itson}
+      MYSQL_DATABASE: multas_db
+    volumes:
+      - db-multas-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  # ==========================================
+  # MICROSERVICIOS
+  # ==========================================
+
+  ms-catalogo:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-catalogo/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-catalogo:3306/catalogo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-catalogo:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  ms-comercio:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-comercio/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-comercio:3306/comercio_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-comercio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  ms-usuarios:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-usuarios/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-usuarios:3306/usuarios_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-usuarios:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  ms-multas:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-multas/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-multas:3306/multas_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-multas:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+volumes:
+  db-catalogo-data:
+  db-comercio-data:
+  db-usuarios-data:
+  db-multas-data:
+
+networks:
+  profeco-net:
+    external: true

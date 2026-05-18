@@ -4,6 +4,7 @@
 -- =============================================
 
 -- 1. BASE DE DATOS: USUARIOS
+DROP DATABASE IF EXISTS usuarios_db;
 CREATE DATABASE IF NOT EXISTS usuarios_db;
 USE usuarios_db;
 
@@ -27,8 +28,7 @@ INSERT INTO usuarios (nombre, apellido, email, telefono, tipo_usuario, password)
 ('Ana', 'Martínez', 'ana.martinez@comercio.com', '6442223344', 'COMERCIANTE', '12345678'),
 ('Roberto', 'Hernández', 'roberto.hdz@profeco.gob.mx', '6443334455', 'PROFECO', '12345678');
 
--- Migración para BDs existentes (ignorar errores si ya existe la columna)
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS password VARCHAR(120) NOT NULL DEFAULT '';
+-- Migración eliminada porque password ya está en el CREATE TABLE
 UPDATE usuarios SET password = '12345678' WHERE password = '' OR password IS NULL;
 
 -- Tablas auxiliares del consumidor móvil (sincronizadas con el backend)
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS lista_compras (
 -- =============================================
 
 -- 2. BASE DE DATOS: COMERCIO
+DROP DATABASE IF EXISTS comercio_db;
 CREATE DATABASE IF NOT EXISTS comercio_db;
 USE comercio_db;
 
@@ -102,6 +103,7 @@ INSERT INTO comercios (nombre_comercial, razon_social, rfc, direccion, ciudad, e
 -- =============================================
 
 -- 3. BASE DE DATOS: CATÁLOGO
+DROP DATABASE IF EXISTS catalogo_db;
 CREATE DATABASE IF NOT EXISTS catalogo_db;
 USE catalogo_db;
 
@@ -148,6 +150,7 @@ INSERT INTO precios_productos (producto_id, comercio_id, precio) VALUES
 -- =============================================
 
 -- 4. BASE DE DATOS: OFERTAS
+DROP DATABASE IF EXISTS ofertas_db;
 CREATE DATABASE IF NOT EXISTS ofertas_db;
 USE ofertas_db;
 
@@ -174,6 +177,7 @@ INSERT INTO ofertas (comercio_id, titulo, descripcion, precio_original, precio_o
 -- =============================================
 
 -- 5. BASE DE DATOS: RESEÑAS
+DROP DATABASE IF EXISTS resenias_db;
 CREATE DATABASE IF NOT EXISTS resenias_db;
 USE resenias_db;
 
@@ -197,6 +201,7 @@ INSERT INTO resenias (usuario_id, comercio_id, calificacion, comentario) VALUES
 -- =============================================
 
 -- 6. BASE DE DATOS: MULTAS Y REPORTES
+DROP DATABASE IF EXISTS multas_db;
 CREATE DATABASE IF NOT EXISTS multas_db;
 USE multas_db;
 

@@ -14,101 +14,128 @@
 
 Un sistema distribuido basado en una arquitectura de microservicios, diseñado para gestionar de manera integral las interacciones entre los consumidores, los comercios y la Procuraduría Federal del Consumidor (PROFECO). 
 
-Este proyecto implementa interfaces dedicadas para cada rol de usuario, orquestadas a través de un backend robusto que aprovecha la comunicación gRPC inter-servicios y un Gateway de API para el acceso desde clientes externos.
+Este proyecto implementa interfaces dedicadas para cada rol de usuario, orquestadas a través de un backend robusto que aprovecha la comunicación gRPC inter-servicios y un Gateway de API para el acceso desde clientes externos con soporte nativo para balanceo de cargas.
 
 ---
 
 ## Arquitectura del Sistema
 
-El ecosistema está fragmentado en módulos lógicos que garantizan alta disponibilidad, escalabilidad independiente y tolerancia a fallos.
+El ecosistema está totalmente Dockerizado y fragmentado en nodos lógicos que garantizan alta disponibilidad, escalabilidad independiente y tolerancia a fallos.
 
 ### Backend (`/backend`)
-Desarrollado en Java utilizando Spring Boot, emplea gRPC para la comunicación interna y Envoy Proxy para transcodificación y exposición de APIs hacia los clientes.
+Desarrollado en Java utilizando Spring Boot, emplea gRPC para la comunicación interna y Envoy Proxy para transcodificación y exposición de APIs hacia los clientes, balanceando la carga dinámicamente (`Least Request`) hacia $N$ instancias del mismo microservicio.
 
-* **Microservicios (`/microservices`):**
-  * `ms-catalogo`: Gestión y mantenimiento del catálogo de productos.
-  * `ms-comercio`: Administración de entidades comerciales y validación de perfiles.
-  * `ms-multas`: Motor de generación, asignación y seguimiento de multas.
-  * `ms-ofertas`: Controlador de reglas de negocio para promociones y ofertas vigentes.
-  * `ms-resenias`: Procesamiento de calificaciones y opiniones generadas por los usuarios.
-  * `ms-usuarios`: Gestión de identidades, perfiles, y preferencias del consumidor.
-  * `notificaciones`: Servicio encargado de emitir alertas y comunicaciones.
-* **Gateway (`/infrastructure/envoy`):** Instancias de Envoy Proxy encapsuladas en Docker que fungen como API Gateways independientes (`gateway-comercio`, `gateway-consumidor`, `gateway-consumidor-movil`, `gateway-profeco`), realizando enrutamiento, balanceo de carga y transcodificación de gRPC a JSON/REST.
-* **Contratos gRPC (`/common-grpc`):** Definición centralizada de esquemas `.proto` utilizados para la generación de stubs y contratos de comunicación en todo el ecosistema.
+* **Microservicios Centrales (`ms-catalogo`, `ms-comercio`, `ms-usuarios`, `ms-multas`):** Operan en el `servidor-central`.
+* **Microservicios Secundarios (`ms-ofertas`, `ms-resenias`):** Operan en el `servidor-secundario`.
+* **Infraestructura (`notificaciones`, RabbitMQ, Envoy):** Capa transversal de eventos y enrutamiento.
 
-### Frontend Web (`/frontend-web`)
-Aplicaciones Single-Page (SPA) de alto rendimiento, optimizadas con Vite y desarrolladas en React.
+### Gateways y Frontend (`/frontend-web` y `/docker`)
+Cada rol de usuario cuenta con su propia Interfaz Web (React/Vite) empaquetada junto a su respectivo Envoy Proxy (API Gateway) para transcodificar sus peticiones HTTP/JSON a gRPC.
 
-* `ui-comercio`: Plataforma de gestión B2B para que los negocios operen sus catálogos y respondan métricas.
-* `ui-consumidor`: Portal B2C orientado al cliente final para exploración, gestión de listas y seguimiento.
-* `ui-profeco`: Consola de administración gubernamental exclusiva para operaciones de auditoría y sanciones.
-
-### Frontend Móvil (`/frontend-mobile`)
-* `app-consumidor`: Aplicación nativa Android desarrollada en Kotlin, ofreciendo un canal móvil optimizado para la experiencia del usuario final.
+* `ui-comercio` + `gateway-comercio`
+* `ui-consumidor` + `gateway-consumidor`
+* `ui-profeco` + `gateway-profeco`
 
 ---
 
 ## Requisitos de Entorno
 
-Para compilar y ejecutar el ecosistema en un entorno de desarrollo local, es estrictamente necesario contar con las siguientes herramientas instaladas y configuradas en tu `PATH`:
+Para compilar y ejecutar el ecosistema en un entorno local, requieres:
 
-* **Java Development Kit (JDK):** Versión 17 o superior.
-* **Apache Maven:** Versión 3.8+ (para resolución de dependencias, compilación de binarios y generación de Stubs de gRPC).
-* **Node.js y NPM:** Versión 18+ (para el despliegue de clientes web).
-* **Docker y Docker Compose:** Fundamentales para orquestar los microservicios y Envoy Proxies.
-* **Bases de Datos Host:** Instancias de **MySQL** (puerto 3306) y **RabbitMQ** (puerto 5672) operando de manera nativa en el Host, o virtualizadas bajo puertos accesibles en `host.docker.internal`.
-* **Android Studio:** Última versión estable (obligatorio únicamente para la compilación y pruebas del entorno móvil).
+* **Docker y Docker Compose:** (Imprescindibles para orquestar la arquitectura completa).
+* **Java Development Kit (JDK 17+) y Maven (3.8+):** Requeridos si se desean compilar los microservicios localmente.
+* **Android Studio:** Únicamente para compilar el cliente móvil nativo (`frontend-mobile`).
 
 ---
 
-## Guía Detallada de Despliegue Local
+## Guía Súper Completa de Despliegue Local
 
-El proyecto requiere una orquestación estricta, dado que los contenedores Docker dependen de los binarios de Java pre-compilados y de una red virtual compartida. Sigue estos pasos en orden secuencial:
+El proyecto está diseñado para levantarse íntegramente a través de Docker Compose. Todas las dependencias de Java (Maven) y web (Node/React) se descargan y compilan automáticamente dentro de los contenedores Docker usando "Multi-stage builds".
 
-### 1. Preparación de la Red Docker
-Todos los contenedores del ecosistema se comunican mediante una red virtual compartida llamada `profeco-net`. Debes crearla manualmente antes de invocar los archivos de compose:
+Abre tu terminal (PowerShell recomendado) y sigue estos pasos al pie de la letra:
+
+### 1. Clonar el Repositorio
+Primero, descarga el código fuente a tu computadora y entra a la carpeta del proyecto.
+```bash
+git clone https://github.com/SebastianMorenoV/profeco-project.git
+cd profeco-project
+```
+
+### 2. Preparar la Red Compartida
+Todos los contenedores, sin importar en qué archivo YAML estén, se comunican a través de esta red virtual. Debe crearse primero. Ejecuta:
 ```bash
 docker network create profeco-net
 ```
 
-### 2. Compilación de Binarios (Java y gRPC)
-Los archivos `Dockerfile` de cada microservicio no compilan código fuente, sino que copian los archivos `.jar` ya ensamblados. Es obligatorio ejecutar la fase de compilación local de Maven desde la raíz del backend:
+### 3. Navegar al directorio de orquestación
+Todo el flujo de despliegue de Docker se realiza desde la carpeta `docker`.
 ```bash
-cd backend/profeco-backend
-mvn clean install -DskipTests
+cd docker
 ```
-*Nota: El argumento `-DskipTests` se sugiere para acelerar el despliegue local inicial. Este proceso resolverá las dependencias de `common-grpc` y construirá los artefactos (`.jar`) en el directorio `/target` de cada microservicio y proxy.*
+*(Nota: A partir de este punto, todos los comandos se ejecutan dentro de la carpeta `profeco-project/docker`)*
 
-### 3. Orquestación del API Gateway (Envoy Proxies)
-Una vez que los proto-descriptors están generados, se debe inicializar el enjambre de Proxies Envoy que manejarán las peticiones REST.
+### 4. Levantar el Middleware
+El broker de mensajería (RabbitMQ) debe ser el primero en arrancar para que los microservicios puedan suscribirse a sus colas sin errores.
 ```bash
-cd backend/profeco-backend/infrastructure/envoy
-docker-compose up -d --build
-```
-*Nota: Esto levantará contenedores independientes para los gateways de comercio (8082), consumidor (8083), consumidor móvil (8084) y profeco (8085).*
-
-### 4. Despliegue de los Microservicios
-Con los `.jar` listos y la red establecida, se inicializan todos los microservicios del negocio, los cuales se enlazarán a las bases de datos de tu host local (`host.docker.internal`):
-```bash
-cd backend/profeco-backend/microservices
-docker-compose up -d --build
-```
-Para verificar la salud de los contenedores o leer los logs en vivo, puedes ejecutar: `docker compose logs -f ms-catalogo` (reemplaza por el nombre del servicio deseado).
-
-### 5. Inicialización de Aplicaciones Web Frontend
-Las aplicaciones web operan independientemente de Docker. Para iniciar cualquiera de ellas, navega a su directorio, instala los paquetes e inicializa el servidor Vite:
-```bash
-# Ejemplo usando ui-consumidor:
-cd frontend-web/ui-consumidor
-npm install
-npm run dev
+docker compose -f docker-compose.middleware.yml up -d --build
 ```
 
-### 6. Compilación del Entorno Móvil
-1. Abre **Android Studio**.
-2. Selecciona `File > Open` y elige el directorio `frontend-mobile/app-consumidor`.
-3. Espera a que la Sincronización Gradle finalice por completo.
-4. Selecciona tu emulador o dispositivo físico y haz clic en `Run` (o presiona `Shift + F10`).
+### 5. Levantar las Bases de Datos y Microservicios
+Levantaremos los servidores central y secundario. **¡Opcionalmente puedes escalar las instancias para probar el balanceador de cargas Envoy!**
+```bash
+# Servidor central (escalando usuarios y catálogo para demostrar balanceo)
+docker compose -f docker-compose.servidor-central.yml up -d --build --scale ms-usuarios=3 --scale ms-catalogo=2
+
+# Servidor secundario
+docker compose -f docker-compose.servidor-secundario.yml up -d --build
+```
+
+### 6. Inyectar Datos Raíz (Seed Data)
+Antes de empezar a usar la aplicación, es necesario crear las tablas e insertar los datos iniciales (Usuarios, Productos, etc.) ejecutando el archivo `databases.sql` en cada uno de los contenedores de base de datos.
+Copia y pega este bloque completo en tu consola de PowerShell (asegúrate de seguir en la carpeta `docker`):
+
+```powershell
+# 1. Base de datos de Usuarios
+docker cp ..\requirements\databases.sql db-usuarios:/tmp/databases.sql
+docker exec db-usuarios mysql -uroot -pitson -e "source /tmp/databases.sql"
+
+# 2. Base de datos de Comercio
+docker cp ..\requirements\databases.sql db-comercio:/tmp/databases.sql
+docker exec db-comercio mysql -uroot -pitson -e "source /tmp/databases.sql"
+
+# 3. Base de datos de Catálogo
+docker cp ..\requirements\databases.sql db-catalogo:/tmp/databases.sql
+docker exec db-catalogo mysql -uroot -pitson -e "source /tmp/databases.sql"
+
+# 4. Base de datos de Ofertas
+docker cp ..\requirements\databases.sql db-ofertas:/tmp/databases.sql
+docker exec db-ofertas mysql -uroot -pitson -e "source /tmp/databases.sql"
+
+# 5. Base de datos de Reseñas
+docker cp ..\requirements\databases.sql db-resenias:/tmp/databases.sql
+docker exec db-resenias mysql -uroot -pitson -e "source /tmp/databases.sql"
+
+# 6. Base de datos de Multas
+docker cp ..\requirements\databases.sql db-multas:/tmp/databases.sql
+docker exec db-multas mysql -uroot -pitson -e "source /tmp/databases.sql"
+```
+
+### 7. Levantar Notificaciones
+Ahora que RabbitMQ y las bases de datos están listos, levantamos el consumidor de eventos.
+```bash
+docker compose -f docker-compose.notificaciones.yml up -d --build
+```
+
+### 8. Levantar Gateways (Envoy) y Frontends (React)
+Finalmente, levantamos los balanceadores de carga y las interfaces gráficas. Cada archivo levantará la interfaz y el proxy del rol correspondiente.
+```bash
+docker compose -f docker-compose.gateway-comercio.yml up -d --build
+docker compose -f docker-compose.gateway-consumidor.yml up -d --build
+docker compose -f docker-compose.gateway-profeco.yml up -d --build
+docker compose -f docker-compose.gateway-movil.yml up -d --build
+```
+
+¡Listo! Todo el ecosistema distribuido está operando. Cualquier petición que pase por los Gateways se enviará automáticamente al microservicio correspondiente y será balanceada usando la estrategia `Least Request` entre todos los contenedores vivos de dicho servicio.
 
 ---
 

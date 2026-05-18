@@ -1,0 +1,31 @@
+# ==========================================
+# NODO: GATEWAY CONSUMIDOR MÓVIL
+# ==========================================
+# Envoy Proxy que recibe peticiones REST de la app Android
+# y las transcodifica a gRPC hacia los microservicios.
+#
+# Puerto expuesto: 8084
+# Protocolo entrada: REST/HTTP
+# Protocolo salida:  gRPC/HTTP2
+#
+# Uso:
+#   docker compose -f docker-compose.gateway-movil.yml up -d
+# ==========================================
+
+services:
+  gateway-movil:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: gateway-movil
+    ports:
+      - "8084:8084"
+    volumes:
+      - ../backend/profeco-backend/infrastructure/envoy/envoy-consumidor-movil.yaml:/etc/envoy/envoy.yaml:ro
+      - ../backend/profeco-backend/infrastructure/envoy/proto:/etc/envoy/proto:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "--service-cluster", "gateway-movil"]
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+networks:
+  profeco-net:
+    external: true

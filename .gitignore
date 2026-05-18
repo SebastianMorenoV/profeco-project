@@ -1,6 +1,5 @@
-/backend/profeco-backend/common-grpc/target/
 # ==========================================
-# 1. Archivos compilados de Maven (Lo más importante)
+# 1. Archivos compilados de Maven
 # ==========================================
 # El asterisco doble (**) hace que ignore la carpeta target 
 # de CADA microservicio y enrutador, no solo la raíz.
@@ -13,7 +12,15 @@
 *.log
 
 # ==========================================
-# 2. Archivos específicos de NetBeans
+# 2. Node.js
+# ==========================================
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.vite/
+
+# ==========================================
+# 3. Archivos específicos de NetBeans
 # ==========================================
 nbproject/private/
 build/
@@ -25,30 +32,38 @@ nbactions.xml
 nb-configuration.xml
 
 # ==========================================
-# 3. Otros IDEs (Por si alguien de tu equipo usa IntelliJ o VSCode)
+# 4. Otros IDEs (IntelliJ, VSCode)
 # ==========================================
 .idea/
 *.iml
+*.iws
+*.ipr
 .vscode/
 
 # ==========================================
-# 4. Archivos del Sistema Operativo
+# 5. Archivos del Sistema Operativo
 # ==========================================
 .DS_Store
 Thumbs.db
 
 # ==========================================
-# 5. Variables de entorno locales (Seguridad futura)
+# 6. Variables de entorno (Seguridad)
 # ==========================================
 .env
+!.env.example
 
 # ==========================================
-# 6. Firebase
+# 7. Firebase y credenciales
 # ==========================================
 **/google-services.json
 **/serviceAccountKey.json
 
 # ==========================================
-# 7. Archivos de pruebas de endpoints
+# 8. Maven Wrapper
+# ==========================================
+**/.mvn/wrapper/maven-wrapper.jar
+
+# ==========================================
+# 9. Archivos de pruebas de endpoints
 # ==========================================
 *.http

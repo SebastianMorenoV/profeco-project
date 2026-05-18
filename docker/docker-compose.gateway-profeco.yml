@@ -1,0 +1,43 @@
+# ==========================================
+# NODO: GATEWAY PROFECO (Funcionarios)
+# ==========================================
+# Frontend React (UIProfeco) + Envoy Proxy (EnrutadorProfeco).
+# Usado por los funcionarios de PROFECO para gestión
+# de multas, usuarios y administración.
+#
+# Puertos expuestos:
+#   - 3001 → Frontend React (UIProfeco)
+#   - 8085 → Envoy Proxy (REST → gRPC)
+#
+# Uso:
+#   docker compose -f docker-compose.gateway-profeco.yml up -d --build
+# ==========================================
+
+services:
+  ui-profeco:
+    build:
+      context: ../frontend-web/ui-profeco
+      dockerfile: Dockerfile
+    container_name: ui-profeco
+    ports:
+      - "3001:4173"
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  gateway-profeco:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: gateway-profeco
+    ports:
+      - "8085:8085"
+    volumes:
+      - ../backend/profeco-backend/infrastructure/envoy/envoy-profeco.yaml:/etc/envoy/envoy.yaml:ro
+      - ../backend/profeco-backend/infrastructure/envoy/proto:/etc/envoy/proto:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "--service-cluster", "gateway-profeco"]
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+networks:
+  profeco-net:
+    external: true

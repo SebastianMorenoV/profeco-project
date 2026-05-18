@@ -1,0 +1,42 @@
+# ==========================================
+# NODO: GATEWAY CONSUMIDOR WEB
+# ==========================================
+# Frontend React (UIConsumidor) + Envoy Proxy (EnrutadorConsumidorWeb).
+# Usado por consumidores desde el navegador web.
+#
+# Puertos expuestos:
+#   - 3002 → Frontend React (UIConsumidor)
+#   - 8083 → Envoy Proxy (REST → gRPC)
+#
+# Uso:
+#   docker compose -f docker-compose.gateway-consumidor.yml up -d --build
+# ==========================================
+
+services:
+  ui-consumidor:
+    build:
+      context: ../frontend-web/ui-consumidor
+      dockerfile: Dockerfile
+    container_name: ui-consumidor
+    ports:
+      - "3002:4173"
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+  gateway-consumidor:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: gateway-consumidor
+    ports:
+      - "8083:8083"
+    volumes:
+      - ../backend/profeco-backend/infrastructure/envoy/envoy-consumidor.yaml:/etc/envoy/envoy.yaml:ro
+      - ../backend/profeco-backend/infrastructure/envoy/proto:/etc/envoy/proto:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "--service-cluster", "gateway-consumidor"]
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+networks:
+  profeco-net:
+    external: true

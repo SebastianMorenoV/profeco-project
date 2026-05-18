@@ -1,0 +1,48 @@
+# ==========================================
+# .dockerignore — Backend Profeco
+# ==========================================
+# Excluye archivos innecesarios del build context
+# para acelerar el build de Docker y reducir el tamaño.
+
+# Carpetas de compilación (se regeneran dentro del contenedor)
+**/target/
+
+# IDEs
+**/.idea/
+**/.vscode/
+**/*.iml
+**/*.iws
+**/*.ipr
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentación y archivos innecesarios
+**/*.md
+**/*.http
+**/HELP.md
+
+# Docker (evitar recursión)
+**/Dockerfile
+**/docker-compose*.yml
+**/.dockerignore
+
+# OS
+**/.DS_Store
+**/Thumbs.db
+
+# Archivos de entorno
+**/.env
+
+# NetBeans
+**/nbproject/
+**/nbbuild/
+**/nbdist/
+**/.nb-gradle/
+
+# Maven wrapper (se usa el maven de la imagen Docker)
+**/.mvn/
+**/mvnw
+**/mvnw.cmd

@@ -1,0 +1,43 @@
+# ==========================================
+# NODO: NOTIFICACIONES
+# ==========================================
+# Servicio consumidor de eventos de RabbitMQ que envía
+# notificaciones por correo electrónico (SMTP) y
+# push notifications (Firebase Cloud Messaging).
+#
+# Puerto expuesto: 8090
+# Conexiones:
+#   - RabbitMQ (AMQP) → consume eventos de ofertas y multas
+#   - ms-usuarios (gRPC) → resuelve tokens FCM por usuario
+#   - SMTP → envía correos electrónicos
+#   - Firebase → envía push notifications
+#
+# Uso:
+#   docker compose -f docker-compose.notificaciones.yml up -d --build
+# ==========================================
+
+services:
+  notificaciones:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: infrastructure/notificaciones/Dockerfile
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER:-guest}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS:-guest}
+      - MS_USUARIOS_HOST=ms-usuarios
+      - MS_USUARIOS_GRPC_PORT=9096
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
+networks:
+  profeco-net:
+    external: true
