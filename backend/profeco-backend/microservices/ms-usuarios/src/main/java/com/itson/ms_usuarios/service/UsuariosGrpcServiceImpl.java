@@ -14,6 +14,7 @@ import com.mycompany.grpc.usuarios.*;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -37,6 +38,9 @@ public class UsuariosGrpcServiceImpl extends UsuariosServiceGrpc.UsuariosService
 
     @Autowired
     private ItemListaComprasRepository listaComprasRepo;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public void ping(Empty request, StreamObserver<PingResponse> responseObserver) {
@@ -72,7 +76,7 @@ public class UsuariosGrpcServiceImpl extends UsuariosServiceGrpc.UsuariosService
         String tipo = request.getTipoUsuario() == null || request.getTipoUsuario().isBlank()
                 ? "CONSUMIDOR" : request.getTipoUsuario();
         entity.setTipoUsuario(tipo);
-        entity.setPassword(request.getPassword());
+        entity.setPassword(passwordEncoder.encode(request.getPassword()));
 
         Usuario saved = usuarioRepo.save(entity);
         responseObserver.onNext(UsuarioResponse.newBuilder().setUsuario(toProto(saved)).build());
@@ -96,7 +100,7 @@ public class UsuariosGrpcServiceImpl extends UsuariosServiceGrpc.UsuariosService
                     if (!Boolean.TRUE.equals(u.getActivo())) {
                         responseObserver.onNext(LoginResponse.newBuilder()
                                 .setExito(false).setMensaje("Usuario inactivo.").build());
-                    } else if (!password.equals(u.getPassword())) {
+                    } else if (!passwordEncoder.matches(password, u.getPassword())) {
                         responseObserver.onNext(LoginResponse.newBuilder()
                                 .setExito(false).setMensaje("Contraseña incorrecta.").build());
                     } else {
@@ -126,13 +130,13 @@ public class UsuariosGrpcServiceImpl extends UsuariosServiceGrpc.UsuariosService
                                 .asRuntimeException());
                         return;
                     }
-                    if (!request.getPasswordActual().equals(u.getPassword())) {
+                    if (!passwordEncoder.matches(request.getPasswordActual(), u.getPassword())) {
                         responseObserver.onNext(MensajeResponse.newBuilder()
                                 .setExito(false).setMensaje("La contraseña actual no coincide.").build());
                         responseObserver.onCompleted();
                         return;
                     }
-                    u.setPassword(request.getPasswordNuevo());
+                    u.setPassword(passwordEncoder.encode(request.getPasswordNuevo()));
                     usuarioRepo.save(u);
                     responseObserver.onNext(MensajeResponse.newBuilder()
                             .setExito(true).setMensaje("Contraseña actualizada.").build());

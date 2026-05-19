@@ -64,6 +64,7 @@ services:
       MYSQL_DATABASE: usuarios_db
     volumes:
       - db-usuarios-data:/var/lib/mysql
+      - ./init-sql/usuarios-seed.sql:/docker-entrypoint-initdb.d/01-usuarios-seed.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 15s
