@@ -1,11 +1,16 @@
-import { http } from './client';
+import { http, tokenStore } from './client';
 
 export const usuariosApi = {
   login: async (email, password) => {
-    return await http.post('/api/usuarios/login', { email, password });
+    const r = await http.post('/api/auth/login', { email, password });
+    // Guardar JWT automáticamente al hacer login exitoso
+    if (r?.exito && r?.token) {
+      tokenStore.save(r.token);
+    }
+    return r;
   },
   registrar: async ({ nombre, apellido, email, telefono, password }) => {
-    const r = await http.post('/api/usuarios', {
+    const r = await http.post('/api/auth/registrar', {
       nombre,
       apellido,
       email,
@@ -13,6 +18,10 @@ export const usuariosApi = {
       tipo_usuario: 'CONSUMIDOR',
       password
     });
+    // Guardar JWT automáticamente al registrarse
+    if (r?.exito && r?.token) {
+      tokenStore.save(r.token);
+    }
     return r.usuario;
   },
   obtenerComerciosFavoritos: async (usuarioId) => {

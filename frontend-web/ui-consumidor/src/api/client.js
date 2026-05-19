@@ -1,5 +1,7 @@
 const BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8083';
 
+const JWT_KEY = 'profeco_jwt';
+
 export class ApiError extends Error {
   constructor(status, body, message) {
     super(message);
@@ -17,15 +19,30 @@ function parseBody(text, contentType) {
 }
 
 async function request(path, init) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init
-  });
+  const headers = { ...(init?.headers || {}) };
+  const method = (init?.method || 'GET').toUpperCase();
+
+  // Inyectar JWT si existe
+  const token = localStorage.getItem(JWT_KEY);
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Solo enviar Content-Type en métodos con body
+  if (['POST', 'PUT', 'PATCH'].includes(method)) {
+    if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(`${BASE}${path}`, { ...init, headers });
   const text = await res.text();
   const contentType = res.headers.get('content-type') ?? '';
   const body = parseBody(text, contentType);
 
   if (!res.ok) {
+    // Si Envoy rechaza por JWT inválido, limpiar sesión
+    if (res.status === 401) {
+      localStorage.removeItem(JWT_KEY);
+    }
     let msg;
     if (typeof body === 'string') {
       msg = body.length > 160 ? `${body.slice(0, 160)}…` : body;
@@ -53,4 +70,11 @@ export const http = {
   post: (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
   put: (path, data) => request(path, { method: 'PUT', body: JSON.stringify(data) }),
   del: (path) => request(path, { method: 'DELETE' })
+};
+
+// Helpers para manejar JWT
+export const tokenStore = {
+  save: (token) => localStorage.setItem(JWT_KEY, token),
+  get: () => localStorage.getItem(JWT_KEY),
+  clear: () => localStorage.removeItem(JWT_KEY)
 };

@@ -15,5 +15,6 @@
         <module>grpc-ofertas</module>
         <module>grpc-resenias</module>
         <module>grpc-usuarios</module>
+        <module>grpc-auth</module>
     </modules>
 </project>

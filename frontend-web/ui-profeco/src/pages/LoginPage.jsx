@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usuariosApi } from '../api';
+import { tokenStore } from '../api/client';
 
 export function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -25,6 +26,7 @@ export function LoginPage({ onLogin }) {
       const tipo = res.usuario?.tipoUsuario ?? res.usuario?.tipo_usuario;
       if (tipo !== 'PROFECO') {
         setErrMsg('Acceso denegado. Solo agentes PROFECO pueden acceder a este panel.');
+        tokenStore.clear(); // Limpiar el token si no tiene acceso
         setProcesando(false);
         return;
       }

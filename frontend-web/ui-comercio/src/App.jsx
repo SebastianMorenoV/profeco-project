@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { tokenStore } from './api/client';
 import Sidebar from './components/layout/Sidebar';
 import DashboardPage from './pages/DashboardPage';
 import CrearOfertasPage from './pages/CrearOfertasPage';
@@ -32,6 +33,7 @@ function App() {
   const cerrarSesion = () => {
   setComercio(null);
   localStorage.removeItem('comercio_sesion');
+  tokenStore.clear();
   // Opcional: limpiar también los precios/ofertas locales si quieres un reset total
   localStorage.removeItem('precios_simulados');
   localStorage.removeItem('ofertas_simuladas');

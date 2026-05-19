@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+option java_multiple_files = true;
+option java_package = "com.mycompany.grpc.auth";
+option java_outer_classname = "AuthProto";
+
+package profeco.auth.v1;
+
+// =============================================
+// SERVICIO DE AUTENTICACIÓN
+// =============================================
+// Identity Provider centralizado que emite y valida JWT tokens.
+// Todos los gateways (Envoy) delegan la autenticación aquí.
+service AuthService {
+
+  rpc Login(LoginRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/login"
+      body: "*"
+    };
+  }
+
+  rpc Registrar(RegistrarRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/registrar"
+      body: "*"
+    };
+  }
+
+  rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/refresh"
+      body: "*"
+    };
+  }
+
+  rpc ValidarToken(ValidarTokenRequest) returns (ValidarTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/validar"
+      body: "*"
+    };
+  }
+
+  rpc Ping(Empty) returns (PingResponse) {
+    option (google.api.http) = {
+      get: "/api/auth/ping"
+    };
+  }
+}
+
+// =============================================
+// MENSAJES
+// =============================================
+message Empty {}
+
+message PingResponse {
+  string mensaje = 1;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegistrarRequest {
+  string nombre = 1;
+  string apellido = 2;
+  string email = 3;
+  string telefono = 4;
+  string tipo_usuario = 5; // CONSUMIDOR, COMERCIANTE, PROFECO
+  string password = 6;
+}
+
+message RefreshTokenRequest {
+  string token = 1;
+}
+
+message ValidarTokenRequest {
+  string token = 1;
+}
+
+message AuthResponse {
+  bool exito = 1;
+  string mensaje = 2;
+  string token = 3;         // JWT access token
+  UsuarioInfo usuario = 4;
+}
+
+message ValidarTokenResponse {
+  bool valido = 1;
+  string mensaje = 2;
+  UsuarioInfo usuario = 3;
+}
+
+message UsuarioInfo {
+  int64 id = 1;
+  string nombre = 2;
+  string apellido = 3;
+  string email = 4;
+  string telefono = 5;
+  string tipo_usuario = 6;
+}

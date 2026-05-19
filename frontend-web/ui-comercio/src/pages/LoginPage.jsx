@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { getPerfilComercio } from '../api/comercio';
+import client, { tokenStore } from '../api/client';
 
 export default function LoginPage({ onLogin }) {
-  const [comercioId, setComercioId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
 
@@ -12,23 +13,37 @@ export default function LoginPage({ onLogin }) {
     setCargando(true);
 
     try {
-      if (!comercioId) {
-        setError('Por favor ingresa un ID de comercio.');
+      if (!email.trim() || !password) {
+        setError('Captura email y contraseña.');
         setCargando(false);
         return;
       }
 
-      const res = await getPerfilComercio(comercioId);
-      
-      if (res.data && res.data.comercio) {
-        onLogin(res.data.comercio);
-      } else if (res.data && res.data.id) {
-        onLogin(res.data);
+      // Login via ms-auth (JWT)
+      const res = await client.post('/api/auth/login', { email: email.trim(), password });
+
+      if (res.data && res.data.exito) {
+        // Guardar JWT
+        if (res.data.token) {
+          tokenStore.save(res.data.token);
+        }
+
+        // Verificar que sea tipo COMERCIANTE
+        const tipo = res.data.usuario?.tipoUsuario ?? res.data.usuario?.tipo_usuario;
+        if (tipo !== 'COMERCIANTE') {
+          setError('Acceso denegado. Solo comerciantes pueden acceder a este panel.');
+          tokenStore.clear();
+          setCargando(false);
+          return;
+        }
+
+        onLogin(res.data.usuario);
       } else {
-        setError('No se pudo cargar la información del comercio.');
+        setError(res.data?.mensaje || 'Credenciales inválidas.');
       }
     } catch (err) {
-      setError('Comercio no encontrado o error de conexión.');
+      const msg = err.response?.data?.mensaje || err.response?.data?.message || 'Error al conectar con el servidor.';
+      setError(msg);
     } finally {
       setCargando(false);
     }
@@ -44,13 +59,28 @@ export default function LoginPage({ onLogin }) {
 
         <form onSubmit={handleSubmit}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>ID del Comercio</label>
+            <label style={styles.label}>Correo electrónico</label>
             <input 
-              type="number" 
+              type="email" 
               style={styles.input} 
-              placeholder="Ej. 1"
-              value={comercioId}
-              onChange={(e) => setComercioId(e.target.value)}
+              placeholder="comercio@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Contraseña</label>
+            <input 
+              type="password" 
+              style={styles.input} 
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              minLength={6}
               required
             />
           </div>
@@ -58,7 +88,7 @@ export default function LoginPage({ onLogin }) {
           {error && <p style={styles.error}>{error}</p>}
 
           <button type="submit" disabled={cargando} style={styles.button}>
-            {cargando ? 'Verificando...' : 'Entrar al Panel'}
+            {cargando ? 'Verificando...' : 'Iniciar sesión'}
           </button>
         </form>
       </div>

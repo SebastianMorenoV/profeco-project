@@ -1,4 +1,4 @@
-import { http } from './client';
+import { http, tokenStore } from './client';
 
 export const usuariosApi = {
   obtener: async (id) => {
@@ -15,8 +15,11 @@ export const usuariosApi = {
     return r.usuario;
   },
   login: async (email, password) => {
-    const r = await http.post('/api/usuarios/login', { email, password });
-    return r; // { exito, mensaje, usuario }
+    const r = await http.post('/api/auth/login', { email, password });
+    if (r?.exito && r?.token) {
+      tokenStore.save(r.token);
+    }
+    return r; // { exito, mensaje, token, usuario }
   },
   buscarPorEmail: async (email) => {
     const r = await http.get(`/api/usuarios/email/${email}`);

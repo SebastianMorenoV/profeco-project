@@ -184,6 +184,28 @@ services:
     networks:
       - profeco-net
 
+  ms-auth:
+    build:
+      context: ../backend/profeco-backend
+      dockerfile: microservices/ms-auth/Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-usuarios:3306/usuarios_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-itson}
+      - JWT_EXPIRATION_HOURS=${JWT_EXPIRATION_HOURS:-24}
+      - JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:--Xmx256m -Xms128m}
+    depends_on:
+      db-usuarios:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    restart: unless-stopped
+    networks:
+      - profeco-net
+
 volumes:
   db-catalogo-data:
   db-comercio-data:

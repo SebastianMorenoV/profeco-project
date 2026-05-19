@@ -3,6 +3,7 @@
 # ==========================================
 # Este archivo define cómo Envoy va a recibir peticiones web (HTTP/JSON)
 # y las va a traducir y enrutar a los microservicios Java (gRPC).
+# Incluye: JWT Authentication, Rate Limiting y Transcodificación gRPC.
 
 static_resources:
   # ---------------------------------------------------------
@@ -45,9 +46,12 @@ static_resources:
                         expose_headers: "grpc-status, grpc-message"
                       
                       # RUTAS: Aquí Envoy lee la ruta y decide a dónde mandarla.
-                      # OJO: Como el transcodificador traduce todo antes de llegar aquí,
-                      # estas rutas buscan el "nombre del paquete gRPC" en lugar de la URL original (/api/...).
                       routes:
+                        # Auth routes (públicas - no requieren JWT)
+                        - match: { prefix: "/profeco.auth.v1.AuthService/" }
+                          route: { cluster: ms-auth }
+                        - match: { prefix: "/api/auth/" }
+                          route: { cluster: ms-auth }
                         - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
                           route: { cluster: ms-comercio }
                         - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
@@ -61,22 +65,57 @@ static_resources:
                         - match: { prefix: "/profeco.multas.v1.MultasService/" }
                           route: { cluster: ms-multas }
                         # Catch-all para que las peticiones OPTIONS (CORS preflight) encuentren una ruta válida
-                        # y el filtro CORS de Envoy pueda procesarlas. El tráfico normal ya fue transcodificado arriba.
                         - match: { prefix: "/" }
                           route: { cluster: ms-comercio }
 
                 # ---------------------------------------------------------
                 # 3. HTTP FILTERS (Filtros HTTP)
-                # Aquí ocurre la verdadera magia de Envoy (El transcodificador).
                 # ---------------------------------------------------------
                 http_filters:
                   # Filtro para procesar CORS
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
                   
-                  # TRANSCODIFICADOR único: maneja Comercio, Catálogo y Ofertas
-                  # Usa un .pb combinado porque encadenar varios grpc_json_transcoder
-                  # interfiere entre ellos cuando uno transcodifica.
+                  # Rate Limiting Local (100 req/min por defecto)
+                  - name: envoy.filters.http.local_ratelimit
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                      stat_prefix: http_local_rate_limiter
+                      token_bucket:
+                        max_tokens: 100
+                        tokens_per_fill: 100
+                        fill_interval: 60s
+                      filter_enabled:
+                        runtime_key: local_rate_limit_enabled
+                        default_value: { numerator: 100, denominator: HUNDRED }
+                      filter_enforced:
+                        runtime_key: local_rate_limit_enforced
+                        default_value: { numerator: 100, denominator: HUNDRED }
+
+                  # JWT Authentication (valida tokens antes de pasar al microservicio)
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        profeco_auth:
+                          issuer: "profeco-auth-service"
+                          forward: true
+                          remote_jwks:
+                            http_uri:
+                              uri: "http://ms-auth:8098/.well-known/jwks.json"
+                              cluster: ms-auth-jwks
+                              timeout: 5s
+                            cache_duration: 300s
+                      rules:
+                        # Rutas públicas (sin JWT requerido)
+                        - match: { prefix: "/api/auth/" }
+                        - match: { prefix: "/profeco.auth.v1.AuthService/" }
+                        - match: { prefix: "/api/usuarios/ping" }
+                        # Todo lo demás requiere JWT válido
+                        - match: { prefix: "/" }
+                          requires: { provider_name: "profeco_auth" }
+
+                  # TRANSCODIFICADOR gRPC-JSON
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
@@ -88,6 +127,7 @@ static_resources:
                         - "profeco.resenias.v1.ReseniasService"
                         - "profeco.usuarios.v1.UsuariosService"
                         - "profeco.multas.v1.MultasService"
+                        - "profeco.auth.v1.AuthService"
                   
                   # El enrutador final que despacha la petición al cluster elegido en el paso 2
                   - name: envoy.filters.http.router
@@ -95,19 +135,17 @@ static_resources:
 
   # ---------------------------------------------------------
   # 4. CLUSTERS (Destinos Backend)
-  # Definen la IP y Puerto de tus microservicios Java reales.
   # ---------------------------------------------------------
   clusters:
-    # Cluster del MS Comercio (corre en el puerto 9092)
+    # Cluster del MS Comercio (gRPC en puerto 9092)
     - name: ms-comercio
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
       dns_lookup_family: V4_ONLY
-      # Forzamos a Envoy a comunicarse con el Java usando HTTP/2 (requerido por gRPC)
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-comercio, port_value: 9092 } } } }] }] }    
     
-    # Cluster del MS Catálogo (corre en el puerto 9091)
+    # Cluster del MS Catálogo (gRPC en puerto 9091)
     - name: ms-catalogo
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
@@ -115,7 +153,7 @@ static_resources:
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-catalogo, port_value: 9091 } } } }] }] }
 
-    # Cluster del MS Ofertas (corre en el puerto 9095)
+    # Cluster del MS Ofertas (gRPC en puerto 9095)
     - name: ms-ofertas
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
@@ -123,7 +161,7 @@ static_resources:
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-ofertas, port_value: 9095 } } } }] }] }
     
-    # Cluster del MS Reseñas (corre en el puerto 9094)
+    # Cluster del MS Reseñas (gRPC en puerto 9094)
     - name: ms-resenias
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
@@ -131,7 +169,7 @@ static_resources:
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-resenias, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-resenias, port_value: 9094 } } } }] }] }
 
-    # Cluster del MS Usuarios (corre en el puerto 9096)
+    # Cluster del MS Usuarios (gRPC en puerto 9096)
     - name: ms-usuarios
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
@@ -139,10 +177,25 @@ static_resources:
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-usuarios, port_value: 9096 } } } }] }] }
 
-    # Cluster del MS Multas (corre en el puerto 9097)
+    # Cluster del MS Multas (gRPC en puerto 9097)
     - name: ms-multas
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-multas, port_value: 9097 } } } }] }] }
+
+    # Cluster del MS Auth (gRPC en puerto 9098)
+    - name: ms-auth
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-auth, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-auth, port_value: 9098 } } } }] }] }
+
+    # Cluster del MS Auth JWKS (HTTP/1.1 en puerto 8098 para el endpoint JWKS)
+    - name: ms-auth-jwks
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      dns_lookup_family: V4_ONLY
+      load_assignment: { cluster_name: ms-auth-jwks, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-auth, port_value: 8098 } } } }] }] }

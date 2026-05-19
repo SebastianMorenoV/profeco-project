@@ -1,5 +1,5 @@
 import { usuariosApi } from '../api';
-import { ApiError } from '../api/client';
+import { ApiError, tokenStore } from '../api/client';
 
 const armaSesion = (u) => ({
   usuarioId: Number(u.id),
@@ -55,5 +55,9 @@ export const authRepository = {
     } catch (err) {
       return { ok: false, mensaje: mapearError(err, 'No se pudo crear la cuenta.') };
     }
+  },
+
+  logout() {
+    tokenStore.clear();
   }
 };

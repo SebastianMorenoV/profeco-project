@@ -4,6 +4,8 @@ const BASE =
   import.meta.env.VITE_API_BASE_URL ??
   (import.meta.env.DEV ? '' : 'http://localhost:8085');
 
+const JWT_KEY = 'profeco_jwt';
+
 export class ApiError extends Error {
   constructor(status, body, message) {
     super(message);
@@ -23,6 +25,13 @@ function parseBody(text, contentType) {
 async function request(path, init = {}) {
   const method = (init.method || 'GET').toUpperCase();
   const headers = { ...(init.headers || {}) };
+
+  // Inyectar JWT si existe
+  const token = localStorage.getItem(JWT_KEY);
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   // Evita preflight innecesario en GET/DELETE: no enviar Content-Type sin cuerpo.
   if (['POST', 'PUT', 'PATCH'].includes(method)) {
     if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -33,6 +42,10 @@ async function request(path, init = {}) {
   const body = parseBody(text, contentType);
 
   if (!res.ok) {
+    // Auto-logout en 401 (token inválido/expirado)
+    if (res.status === 401) {
+      localStorage.removeItem(JWT_KEY);
+    }
     let msg;
     if (typeof body === 'string') {
       msg = body.length > 160 ? `${body.slice(0, 160)}…` : body;
@@ -60,4 +73,11 @@ export const http = {
   post: (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
   put: (path, data) => request(path, { method: 'PUT', body: JSON.stringify(data) }),
   del: (path) => request(path, { method: 'DELETE' })
+};
+
+// Helpers para manejar JWT
+export const tokenStore = {
+  save: (token) => localStorage.setItem(JWT_KEY, token),
+  get: () => localStorage.getItem(JWT_KEY),
+  clear: () => localStorage.removeItem(JWT_KEY)
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { tokenStore } from './api/client';
 import { Layout } from './pages/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { ReportesPage } from './pages/ReportesPage';
@@ -32,6 +33,7 @@ export default function App() {
   const cerrarSesion = () => {
     setUsuario(null);
     localStorage.removeItem(SESSION_KEY);
+    tokenStore.clear();
   };
 
   // Si no hay usuario logueado, mostrar solo Login

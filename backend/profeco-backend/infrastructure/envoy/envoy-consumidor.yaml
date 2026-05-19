@@ -1,8 +1,7 @@
 # ==========================================
 # CONFIGURACIÓN DE ENVOY PARA: GATEWAY CONSUMIDOR WEB
 # ==========================================
-# Usado por consumidores para buscar productos, comparar precios,
-# ver comercios, ver ofertas, consultar multas (transparencia) y dejar reseñas.
+# Incluye: JWT Authentication, Rate Limiting y Transcodificación gRPC.
 
 static_resources:
   listeners:
@@ -30,6 +29,10 @@ static_resources:
                         max_age: "1728000"
                         expose_headers: "grpc-status, grpc-message"
                       routes:
+                        - match: { prefix: "/profeco.auth.v1.AuthService/" }
+                          route: { cluster: ms-auth }
+                        - match: { prefix: "/api/auth/" }
+                          route: { cluster: ms-auth }
                         - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
                           route: { cluster: ms-catalogo }
                         - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
@@ -38,10 +41,10 @@ static_resources:
                           route: { cluster: ms-resenias }
                         - match: { prefix: "/profeco.ofertas.v1.OfertasService/" }
                           route: { cluster: ms-ofertas }
-                        - match: { prefix: "/profeco.multas.v1.MultasService/" }
-                          route: { cluster: ms-multas }
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
                           route: { cluster: ms-usuarios }
+                        - match: { prefix: "/profeco.multas.v1.MultasService/" }
+                          route: { cluster: ms-multas }
                         - match: { prefix: "/api/catalogo" }
                           route: { cluster: ms-catalogo }
                         - match: { prefix: "/api/comercios" }
@@ -50,15 +53,46 @@ static_resources:
                           route: { cluster: ms-resenias }
                         - match: { prefix: "/api/ofertas" }
                           route: { cluster: ms-ofertas }
-                        - match: { prefix: "/api/reportes" }
-                          route: { cluster: ms-multas }
-                        - match: { prefix: "/api/multas" }
-                          route: { cluster: ms-multas }
                         - match: { prefix: "/api/usuarios" }
                           route: { cluster: ms-usuarios }
+                        - match: { prefix: "/" }
+                          route: { cluster: ms-catalogo }
                 http_filters:
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
+                  - name: envoy.filters.http.local_ratelimit
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                      stat_prefix: http_local_rate_limiter
+                      token_bucket:
+                        max_tokens: 100
+                        tokens_per_fill: 100
+                        fill_interval: 60s
+                      filter_enabled:
+                        runtime_key: local_rate_limit_enabled
+                        default_value: { numerator: 100, denominator: HUNDRED }
+                      filter_enforced:
+                        runtime_key: local_rate_limit_enforced
+                        default_value: { numerator: 100, denominator: HUNDRED }
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        profeco_auth:
+                          issuer: "profeco-auth-service"
+                          forward: true
+                          remote_jwks:
+                            http_uri:
+                              uri: "http://ms-auth:8098/.well-known/jwks.json"
+                              cluster: ms-auth-jwks
+                              timeout: 5s
+                            cache_duration: 300s
+                      rules:
+                        - match: { prefix: "/api/auth/" }
+                        - match: { prefix: "/profeco.auth.v1.AuthService/" }
+                        - match: { prefix: "/api/usuarios/ping" }
+                        - match: { prefix: "/" }
+                          requires: { provider_name: "profeco_auth" }
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
@@ -70,8 +104,7 @@ static_resources:
                         - "profeco.ofertas.v1.OfertasService"
                         - "profeco.multas.v1.MultasService"
                         - "profeco.usuarios.v1.UsuariosService"
-                      print_options: { add_whitespace: true }
-                      auto_mapping: true
+                        - "profeco.auth.v1.AuthService"
                   - name: envoy.filters.http.router
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
 
@@ -100,16 +133,26 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-ofertas, port_value: 9095 } } } }] }] }
-    - name: ms-multas
-      type: STRICT_DNS
-      lb_policy: LEAST_REQUEST
-      dns_lookup_family: V4_ONLY
-      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
-      load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-multas, port_value: 9097 } } } }] }] }
     - name: ms-usuarios
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-usuarios, port_value: 9096 } } } }] }] }
-
+    - name: ms-multas
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-multas, port_value: 9097 } } } }] }] }
+    - name: ms-auth
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-auth, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-auth, port_value: 9098 } } } }] }] }
+    - name: ms-auth-jwks
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      dns_lookup_family: V4_ONLY
+      load_assignment: { cluster_name: ms-auth-jwks, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-auth, port_value: 8098 } } } }] }] }

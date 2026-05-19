@@ -12,6 +12,7 @@
         <module>microservices/ms-ofertas</module>
         <module>microservices/ms-resenias</module>
         <module>microservices/ms-usuarios</module>
+        <module>microservices/ms-auth</module>
         <module>common-grpc</module>
         <module>infrastructure/envoy</module>
         <module>infrastructure/notificaciones</module>

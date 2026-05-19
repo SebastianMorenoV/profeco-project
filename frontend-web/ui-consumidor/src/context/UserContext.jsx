@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { usuariosApi } from '../api';
+import { tokenStore } from '../api/client';
 
 const STORAGE_KEY = 'profeco_consumidor_v1';
 const DEFAULT_USUARIO_ID = 1;
@@ -219,6 +220,7 @@ export function UserProvider({ children, syncFavoritos, syncWishlist, syncListaC
   }, []);
 
   const cerrarSesion = useCallback(() => {
+    tokenStore.clear();
     setState(() => ({
       ...defaultState
     }));
