@@ -61,11 +61,12 @@ class UserPrefs(private val context: Context) {
             listaCompras = decodeListaCompras(p[KEY_LISTA_COMPRAS]),
             recibioPushes = p[KEY_RECIBIO_PUSHES] ?: false,
             sesionActiva = p[KEY_SESION_ACTIVA] ?: false,
-            usuarioNombre = p[KEY_USUARIO_NOMBRE].orEmpty()
+            usuarioNombre = p[KEY_USUARIO_NOMBRE].orEmpty(),
+            jwtToken = p[KEY_JWT_TOKEN].orEmpty()
         )
     }
 
-    suspend fun iniciarSesion(usuarioId: Long, nombre: String) =
+    suspend fun iniciarSesion(usuarioId: Long, nombre: String, token: String) =
         context.dataStore.edit { p ->
             val prevId = p[KEY_USUARIO_ID]
             if (prevId != usuarioId) {
@@ -75,6 +76,7 @@ class UserPrefs(private val context: Context) {
             }
             p[KEY_USUARIO_ID] = usuarioId
             p[KEY_USUARIO_NOMBRE] = nombre
+            p[KEY_JWT_TOKEN] = token
             p[KEY_SESION_ACTIVA] = true
         }
 
@@ -82,6 +84,7 @@ class UserPrefs(private val context: Context) {
         context.dataStore.edit { p ->
             p[KEY_SESION_ACTIVA] = false
             p.remove(KEY_USUARIO_NOMBRE)
+            p.remove(KEY_JWT_TOKEN)
             p.remove(KEY_FAV_COMERCIOS)
             p.remove(KEY_WISHLIST)
             p.remove(KEY_LISTA_COMPRAS)
@@ -226,6 +229,7 @@ class UserPrefs(private val context: Context) {
         private val KEY_RECIBIO_PUSHES = booleanPreferencesKey("recibio_pushes")
         private val KEY_SESION_ACTIVA = booleanPreferencesKey("sesion_activa")
         private val KEY_USUARIO_NOMBRE = stringPreferencesKey("usuario_nombre")
+        private val KEY_JWT_TOKEN = stringPreferencesKey("jwt_token")
     }
 }
 
@@ -238,7 +242,8 @@ data class UserPrefsState(
     val listaCompras: List<ItemCompra> = emptyList(),
     val recibioPushes: Boolean = false,
     val sesionActiva: Boolean = false,
-    val usuarioNombre: String = ""
+    val usuarioNombre: String = "",
+    val jwtToken: String = ""
 )
 
 /** Evento de sincronización: UserPrefs lo emite tras tocar local; ServiceLocator lo cablea al backend. */

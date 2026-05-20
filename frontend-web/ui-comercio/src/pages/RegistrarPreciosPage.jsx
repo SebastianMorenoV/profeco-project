@@ -29,10 +29,10 @@ export default function RegistrarPreciosPage({ comercioId }) {
       ]);
 
       // Extraer arreglos (considerando la envoltura de gRPC)
-      const listProd = resProductos.data.productos || resProductos.data || [];
+      const listProd = resProductos.data.productos || (Array.isArray(resProductos.data) ? resProductos.data : []);
       setProductos(listProd);
       setProductosFiltrados(listProd);
-      setMisPrecios(resPrecios.data.precios || resPrecios.data || []);
+      setMisPrecios(resPrecios.data.precios || (Array.isArray(resPrecios.data) ? resPrecios.data : []));
     } catch (error) {
       console.error("Error al cargar el catálogo:", error);
     } finally {
@@ -102,29 +102,31 @@ export default function RegistrarPreciosPage({ comercioId }) {
     return prod ? `${prod.nombre} (${prod.marca})` : `Producto #${id}`;
   };
 
-  if (cargando) return <div style={{ padding: '2rem' }}>Cargando catálogo y precios...</div>;
+  if (cargando) return <div className="loader"><div className="spinner"></div> Cargando catálogo y precios...</div>;
 
   return (
-    <div>
-      <h1 style={styles.title}>Gestión de Precios</h1>
+    <div className="container">
+      <div className="section-header">
+        <h1 style={{color: 'var(--c-primary-dark)'}}>Gestión de Precios</h1>
+      </div>
       
       {/* FORMULARIO DE REGISTRO/ACTUALIZACIÓN */}
-      <div style={styles.card}>
-        <h2 style={styles.subtitle}>Subir o Actualizar Precio</h2>
-        <form onSubmit={manejarGuardarPrecio} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Buscar en el Catálogo Global de Profeco</label>
+      <div className="card" style={{maxWidth: '600px'}}>
+        <h2 style={{fontSize: '1.25rem', marginBottom: '1rem'}}>Subir o Actualizar Precio</h2>
+        <form onSubmit={manejarGuardarPrecio} className="resenia-form">
+          <label>
+            Buscar en el Catálogo Global de Profeco
             <input 
               type="text" 
               placeholder="Buscar por nombre o marca..." 
               value={busqueda}
               onChange={manejarBusqueda}
-              style={{...styles.input, marginBottom: '0.5rem'}}
+              style={{marginBottom: '0.5rem'}}
             />
             <select 
-              style={styles.input} 
               value={productoSeleccionado} 
               onChange={(e) => setProductoSeleccionado(e.target.value)}
+              style={{padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--c-border)'}}
             >
               <option value="">-- Selecciona un producto para vender --</option>
               {productosParaSelect.map(p => (
@@ -133,69 +135,68 @@ export default function RegistrarPreciosPage({ comercioId }) {
                 </option>
               ))}
             </select>
-          </div>
+          </label>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Precio de Venta ($)</label>
+          <label>
+            Precio de Venta ($)
             <input 
               type="number" 
               step="0.01" 
-              style={styles.input} 
               value={precioInput} 
               onChange={(e) => setPrecioInput(e.target.value)} 
               placeholder="Ej. 25.50"
             />
-          </div>
+          </label>
 
-          <button type="submit" style={styles.button}>Guardar Precio en Catálogo</button>
+          <button type="submit" className="nav-cta" style={{marginTop: '0.5rem'}}>Guardar Precio en Catálogo</button>
         </form>
       </div>
 
-      <div style={styles.divider}></div>
+      <hr style={{ border: '0', borderTop: '1px solid var(--c-border)', margin: '2rem 0' }} />
 
       {/* TABLA DE PRECIOS ACTUALES */}
-      <h2 style={styles.subtitle}>Mis Precios Publicados</h2>
+      <h2 style={{fontSize: '1.25rem', marginBottom: '1rem'}}>Mis Precios Publicados</h2>
       {misPrecios.length === 0 ? (
-        <p style={styles.noData}>No has publicado precios aún.</p>
+        <p className="empty-state">No has publicado precios aún.</p>
       ) : (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
+        <div style={{overflowX: 'auto'}}>
+          <table className="precios-table">
             <thead>
               <tr>
-                <th style={styles.th}>ID Precio</th>
-                <th style={styles.th}>Producto</th>
-                <th style={styles.th}>Precio Actual</th>
-                <th style={styles.th}>Última Actualización</th>
-                <th style={styles.th}>Acciones</th>
+                <th>ID Precio</th>
+                <th>Producto</th>
+                <th>Precio Actual</th>
+                <th>Última Actualización</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {misPrecios.map(p => (
-                <tr key={p.id} style={styles.tr}>
-                  <td style={styles.td}>#{p.id}</td>
-                  <td style={styles.td}>{getNombreProducto(p.productoId)}</td>
-                  <td style={styles.td}>
+                <tr key={p.id}>
+                  <td className="muted small">#{p.id}</td>
+                  <td style={{fontWeight: 500}}>{getNombreProducto(p.productoId)}</td>
+                  <td>
                     {editandoId === p.id ? (
                       <input 
                         type="number" 
                         step="0.01" 
-                        style={{...styles.input, width: '100px', padding: '0.5rem'}}
+                        style={{padding: '0.4rem', width: '100px', borderRadius: '4px', border: '1px solid var(--c-primary)'}}
                         value={precioEditado}
                         onChange={(e) => setPrecioEditado(e.target.value)}
                       />
                     ) : (
-                      `$${p.precio.toFixed(2)}`
+                      <span style={{color: 'var(--c-success)', fontWeight: 'bold'}}>${p.precio.toFixed(2)}</span>
                     )}
                   </td>
-                  <td style={styles.td}>{p.fechaReporte ? p.fechaReporte.split('T')[0] : 'N/A'}</td>
-                  <td style={styles.td}>
+                  <td>{p.fechaReporte ? p.fechaReporte.split('T')[0] : 'N/A'}</td>
+                  <td>
                     {editandoId === p.id ? (
                       <div style={{display: 'flex', gap: '0.5rem'}}>
-                        <button style={{...styles.actionBtn, backgroundColor: '#10b981'}} onClick={() => guardarEdicion(p.id)}>Guardar</button>
-                        <button style={{...styles.actionBtn, backgroundColor: '#ef4444'}} onClick={() => setEditandoId(null)}>Cancelar</button>
+                        <button className="btn-secondary" style={{backgroundColor: 'var(--c-success)', color: '#fff', borderColor: 'var(--c-success)'}} onClick={() => guardarEdicion(p.id)}>Guardar</button>
+                        <button className="btn-ghost" onClick={() => setEditandoId(null)}>Cancelar</button>
                       </div>
                     ) : (
-                      <button style={{...styles.actionBtn, backgroundColor: '#3b82f6'}} onClick={() => iniciarEdicion(p)}>Actualizar Precio</button>
+                      <button className="btn-secondary" onClick={() => iniciarEdicion(p)}>Actualizar Precio</button>
                     )}
                   </td>
                 </tr>
@@ -207,22 +208,3 @@ export default function RegistrarPreciosPage({ comercioId }) {
     </div>
   );
 }
-
-const styles = {
-  title: { fontSize: '1.875rem', fontWeight: 'bold', color: '#111827', margin: '0 0 1.5rem 0' },
-  subtitle: { fontSize: '1.25rem', fontWeight: 'bold', color: '#374151', marginBottom: '1rem' },
-  card: { backgroundColor: '#fff', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb', maxWidth: '600px' },
-  form: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  formGroup: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
-  label: { fontSize: '0.875rem', fontWeight: '600', color: '#4b5563' },
-  input: { padding: '0.75rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', fontSize: '1rem', outline: 'none' },
-  button: { padding: '0.75rem', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '0.375rem', fontWeight: 'bold', cursor: 'pointer', marginTop: '0.5rem' },
-  divider: { border: '0', borderTop: '1px solid #e5e7eb', margin: '2rem 0' },
-  tableContainer: { overflowX: 'auto', backgroundColor: '#fff', borderRadius: '0.75rem', border: '1px solid #e5e7eb' },
-  table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
-  th: { backgroundColor: '#f9fafb', padding: '1rem', fontWeight: '600', color: '#4b5563', borderBottom: '1px solid #e5e7eb' },
-  tr: { borderBottom: '1px solid #e5e7eb' },
-  td: { padding: '1rem', color: '#111827' },
-  noData: { color: '#6b7280', fontStyle: 'italic' },
-  actionBtn: { padding: '0.5rem 1rem', color: '#fff', border: 'none', borderRadius: '0.375rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.875rem' }
-};

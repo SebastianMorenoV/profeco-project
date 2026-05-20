@@ -3,6 +3,7 @@ package mx.edu.itson.potros.profecoconsumidor.data
 import mx.edu.itson.potros.profecoconsumidor.data.network.ApiClient
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.LoginRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarUsuarioRequest
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.AuthResponse
 import retrofit2.HttpException
 
 class AuthRepository(private val apiClient: ApiClient) {
@@ -11,7 +12,8 @@ class AuthRepository(private val apiClient: ApiClient) {
         val usuarioId: Long,
         val nombre: String,
         val apellido: String,
-        val email: String
+        val email: String,
+        val token: String
     )
 
     sealed interface Resultado {
@@ -24,15 +26,16 @@ class AuthRepository(private val apiClient: ApiClient) {
             return Resultado.Error("Captura correo y contraseña.")
         }
         return runCatching {
-            val resp = apiClient.usuarios.login(LoginRequest(email.trim(), password))
-            if (resp.exito && resp.usuario != null) {
+            val resp = apiClient.auth.login(LoginRequest(email.trim(), password))
+            if (resp.exito && resp.usuario != null && resp.token.isNotBlank()) {
                 val u = resp.usuario
                 Resultado.Ok(
                     CuentaSesion(
                         usuarioId = u.id,
                         nombre = u.nombre,
                         apellido = u.apellido,
-                        email = u.email
+                        email = u.email,
+                        token = resp.token
                     )
                 )
             } else {
@@ -55,7 +58,7 @@ class AuthRepository(private val apiClient: ApiClient) {
         if (password != confirmar) return Resultado.Error("Las contraseñas no coinciden.")
 
         return runCatching {
-            val resp = apiClient.usuarios.registrar(
+            val resp = apiClient.auth.registrar(
                 RegistrarUsuarioRequest(
                     nombre = nombre.trim(),
                     apellido = apellido.trim(),
@@ -66,17 +69,19 @@ class AuthRepository(private val apiClient: ApiClient) {
                 )
             )
             val u = resp.usuario
-            if (u != null) {
+            val token = resp.token
+            if (u != null && token.isNotBlank()) {
                 Resultado.Ok(
                     CuentaSesion(
                         usuarioId = u.id,
                         nombre = u.nombre,
                         apellido = u.apellido,
-                        email = u.email
+                        email = u.email,
+                        token = token
                     )
                 )
             } else {
-                Resultado.Error("El servidor no devolvió la cuenta creada.")
+                Resultado.Error(resp.mensaje.ifBlank { "El servidor no devolvió la cuenta creada." })
             }
         }.getOrElse { mapearError(it) }
     }

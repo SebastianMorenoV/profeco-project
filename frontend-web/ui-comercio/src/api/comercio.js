@@ -11,14 +11,9 @@ export const getOfertasComercio = (idComercio) => client.get(`/api/ofertas/comer
 
 
 // Comercio
+export const getComercios = () => client.get('/api/comercios');
 export const getPerfilComercio = (id) => {
-  const url = `http://localhost:8082/api/comercios/${id}`;
-  return axios.get(url, {
-    headers: {
-      'Accept': 'application/json'
-      // AQUÍ NO DEBE HABER NADA MÁS
-    }
-  });
-};;
+  return client.get(`/api/comercios/${id}`);
+};
 export const updatePerfilComercio = (id, datos) => client.put(`/api/comercios/${id}`, datos);
 export const getPreciosComercio = (idComercio) => client.get(`/api/catalogo/comercio/${idComercio}/precios`);

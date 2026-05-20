@@ -26,10 +26,13 @@ object ServiceLocator {
     lateinit var prefs: UserPrefs
         private set
 
+    @Volatile
+    private var jwtToken: String? = null
+
     private val baseUrlState = MutableStateFlow(UserPrefs.DEFAULT_BASE_URL)
     val baseUrl: StateFlow<String> get() = baseUrlState.asStateFlow()
 
-    private var apiClient: ApiClient = ApiClient { baseUrlState.value }
+    private var apiClient: ApiClient = ApiClient({ baseUrlState.value }) { jwtToken }
 
     val catalogo: CatalogoRepository get() = CatalogoRepository(apiClient)
     val comercios: ComerciosRepository get() = ComerciosRepository(apiClient)
@@ -44,12 +47,14 @@ object ServiceLocator {
         prefs = UserPrefs(appContext)
         ioScope.launch {
             val initialState = prefs.state.first()
+            jwtToken = initialState.jwtToken.ifBlank { null }
             syncDownFromRemote(initialState.usuarioId)
             
             prefs.state.collect { state ->
+                jwtToken = state.jwtToken.ifBlank { null }
                 if (state.baseUrl != baseUrlState.value) {
                     baseUrlState.value = state.baseUrl
-                    apiClient = ApiClient { state.baseUrl }
+                    apiClient = ApiClient({ state.baseUrl }) { jwtToken }
                 }
             }
         }

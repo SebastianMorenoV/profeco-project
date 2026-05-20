@@ -28,6 +28,7 @@ services:
       MYSQL_DATABASE: catalogo_db
     volumes:
       - db-catalogo-data:/var/lib/mysql
+      - ./init-sql/catalogo-seed.sql:/docker-entrypoint-initdb.d/01-catalogo-seed.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 15s
@@ -46,6 +47,7 @@ services:
       MYSQL_DATABASE: comercio_db
     volumes:
       - db-comercio-data:/var/lib/mysql
+      - ./init-sql/comercio-seed.sql:/docker-entrypoint-initdb.d/01-comercio-seed.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 15s
@@ -83,6 +85,7 @@ services:
       MYSQL_DATABASE: multas_db
     volumes:
       - db-multas-data:/var/lib/mysql
+      - ./init-sql/multas-seed.sql:/docker-entrypoint-initdb.d/01-multas-seed.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 15s

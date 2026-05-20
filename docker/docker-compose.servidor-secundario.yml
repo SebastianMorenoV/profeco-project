@@ -26,6 +26,7 @@ services:
       MYSQL_DATABASE: ofertas_db
     volumes:
       - db-ofertas-data:/var/lib/mysql
+      - ./init-sql/ofertas-seed.sql:/docker-entrypoint-initdb.d/01-ofertas-seed.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 15s
@@ -44,6 +45,7 @@ services:
       MYSQL_DATABASE: resenias_db
     volumes:
       - db-resenias-data:/var/lib/mysql
+      - ./init-sql/resenias-seed.sql:/docker-entrypoint-initdb.d/01-resenias-seed.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 15s

@@ -33,10 +33,10 @@ export default function CrearOfertasPage({ comercioId }) {
   const cargarDatos = async () => {
     try {
       const resP = await getProductos();
-      const catalogoGlobal = Array.isArray(resP.data) ? resP.data : (resP.data.productos || []);
+      const catalogoGlobal = resP.data.productos || (Array.isArray(resP.data) ? resP.data : []);
 
       const resPrecios = await getPreciosPorComercio(comercioId);
-      const misPreciosList = resPrecios.data.precios || resPrecios.data || [];
+      const misPreciosList = resPrecios.data.precios || (Array.isArray(resPrecios.data) ? resPrecios.data : []);
 
       const misProductosParaOfertas = misPreciosList.map(precio => {
         const prodInfo = catalogoGlobal.find(p => p.id === precio.productoId);
@@ -50,7 +50,7 @@ export default function CrearOfertasPage({ comercioId }) {
       setProductos(misProductosParaOfertas);
 
       const resO = await getOfertasComercio(comercioId);
-      const listaO = resO.data.ofertas || [];
+      const listaO = resO.data.ofertas || (Array.isArray(resO.data) ? resO.data : []);
       setMisOfertas(listaO.map(of => ({
         id: of.id,
         producto: of.titulo,
@@ -135,41 +135,45 @@ export default function CrearOfertasPage({ comercioId }) {
   const tipoSeleccionado = TIPOS_PROMOCION.find(t => t.value === form.tipoPromocion);
 
   return (
-    <div>
-      <h1 style={styles.title}>Lanzar Ofertas</h1>
+    <div className="container">
+      <div className="section-header">
+        <h1 style={{color: 'var(--c-primary-dark)'}}>Lanzar Ofertas</h1>
+      </div>
 
       {/* Selector de Modo */}
-      <div style={styles.switchContainer}>
+      <div style={{display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--c-border)', paddingBottom: '1rem'}}>
         <button
           onClick={() => setEsFlexible(false)}
-          style={!esFlexible ? styles.activeTab : styles.tab}
+          className={!esFlexible ? "nav-cta" : "btn-ghost"}
+          style={{padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 600}}
         >
           Por Producto
         </button>
         <button
           onClick={() => setEsFlexible(true)}
-          style={esFlexible ? styles.activeTab : styles.tab}
+          className={esFlexible ? "nav-cta" : "btn-ghost"}
+          style={{padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 600}}
         >
           Promoción Flexible (2x1, Combos)
         </button>
       </div>
 
-      <div style={styles.gridContainer}>
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>{esFlexible ? 'Configurar Promo Flexible' : 'Bajar Precio a Producto'}</h2>
+      <div className="grid grid-2" style={{gap: '2rem'}}>
+        <div className="card">
+          <h2 style={{fontSize: '1.25rem', marginBottom: '1.5rem'}}>{esFlexible ? 'Configurar Promo Flexible' : 'Bajar Precio a Producto'}</h2>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="resenia-form">
             {!esFlexible ? (
               <>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Selecciona el Producto</label>
-                  <select style={styles.input} value={form.idProducto} onChange={e => handleProductoChange(e.target.value)} required>
+                <label>
+                  Selecciona el Producto
+                  <select value={form.idProducto} onChange={e => handleProductoChange(e.target.value)} required>
                     <option value="">-- Elige un producto --</option>
                     {productos.map(p => <option key={p.id} value={p.id}>{p.nombre} (${p.precio.toFixed(2)})</option>)}
                   </select>
-                </div>
+                </label>
                 {form.precioOriginal && (
-                  <div style={styles.infoBanner}>
+                  <div className="info-card" style={{padding: '0.75rem', background: '#eff6ff', borderColor: '#bfdbfe', color: '#1e40af'}}>
                     Precio actual en catálogo: <strong>${parseFloat(form.precioOriginal).toFixed(2)}</strong>
                   </div>
                 )}
@@ -177,126 +181,107 @@ export default function CrearOfertasPage({ comercioId }) {
             ) : (
               <>
                 {/* Tipo de Promoción */}
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Tipo de Promoción</label>
-                  <select style={styles.input} value={form.tipoPromocion} onChange={e => setForm({ ...form, tipoPromocion: e.target.value })} required>
+                <label>
+                  Tipo de Promoción
+                  <select value={form.tipoPromocion} onChange={e => setForm({ ...form, tipoPromocion: e.target.value })} required>
                     <option value="">-- Selecciona el tipo --</option>
                     {TIPOS_PROMOCION.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
-                </div>
+                </label>
 
                 {tipoSeleccionado && (
-                  <div style={styles.tipoBanner}>
+                  <div className="info-card" style={{padding: '0.75rem', background: '#fef3c7', borderColor: '#fcd34d', color: '#92400e'}}>
                     Tipo seleccionado: <strong>{tipoSeleccionado.label}</strong>
                   </div>
                 )}
 
                 {/* Producto asociado (opcional) */}
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Producto Asociado</label>
-                  <select style={styles.input} value={form.productoIdFlexible} onChange={e => handleProductoFlexibleChange(e.target.value)}>
+                <label>
+                  Producto Asociado
+                  <select value={form.productoIdFlexible} onChange={e => handleProductoFlexibleChange(e.target.value)}>
                     <option value="">-- Sin producto asociado (opcional) --</option>
                     {productos.map(p => <option key={p.id} value={p.id}>{p.nombre} (${p.precio.toFixed(2)})</option>)}
                   </select>
-                </div>
+                </label>
 
                 {form.productoIdFlexible && (
-                  <div style={styles.infoBanner}>
+                  <div className="info-card" style={{padding: '0.75rem', background: '#eff6ff', borderColor: '#bfdbfe', color: '#1e40af'}}>
                     Precio del producto: <strong>${parseFloat(form.precioOriginal).toFixed(2)}</strong>
                   </div>
                 )}
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Título de la Promoción (ej. 3x2 en Leche Alpura)</label>
-                  <input type="text" style={styles.input} value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} required />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Descripción / Reglas de la promoción</label>
-                  <textarea style={styles.textArea} value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} required />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Precio Original / Regular ($)</label>
-                  <input type="number" step="0.01" style={styles.input} value={form.precioOriginal} onChange={e => setForm({ ...form, precioOriginal: e.target.value })} required />
-                </div>
+                <label>
+                  Título de la Promoción (ej. 3x2 en Leche Alpura)
+                  <input type="text" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} required />
+                </label>
+                <label>
+                  Descripción / Reglas de la promoción
+                  <textarea value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} required />
+                </label>
+                <label>
+                  Precio Original / Regular ($)
+                  <input type="number" step="0.01" value={form.precioOriginal} onChange={e => setForm({ ...form, precioOriginal: e.target.value })} required />
+                </label>
               </>
             )}
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Precio de Oferta / Combo ($)</label>
-              <input type="number" step="0.01" style={styles.input} value={form.precioOferta} onChange={e => setForm({ ...form, precioOferta: e.target.value })} required />
-            </div>
+            <label>
+              Precio de Oferta / Combo ($)
+              <input type="number" step="0.01" value={form.precioOferta} onChange={e => setForm({ ...form, precioOferta: e.target.value })} required />
+            </label>
 
             {descuentoPreview > 0 && (
-              <div style={styles.discountBanner}>
+              <div className="success-box" style={{padding: '0.75rem', fontSize: '0.9rem'}}>
                 Descuento: <strong>{descuentoPreview.toFixed(1)}%</strong> (${precioOrigNum.toFixed(2)} → ${precioOfertaNum.toFixed(2)})
               </div>
             )}
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Fecha de Vencimiento</label>
-              <input type="date" style={styles.input} value={form.fechaFin} onChange={e => setForm({ ...form, fechaFin: e.target.value })} required />
-            </div>
+            <label>
+              Fecha de Vencimiento
+              <input type="date" value={form.fechaFin} onChange={e => setForm({ ...form, fechaFin: e.target.value })} required />
+            </label>
 
-            {mensaje.texto && <p style={{ color: mensaje.tipo === 'error' ? '#ef4444' : '#10b981', marginBottom: '1rem' }}>{mensaje.texto}</p>}
-            <button type="submit" disabled={enviando} style={styles.button}>
+            {mensaje.texto && <div className={mensaje.tipo === 'error' ? 'error-box' : 'success-box'}><p>{mensaje.texto}</p></div>}
+            
+            <button type="submit" disabled={enviando} className="nav-cta" style={{marginTop: '0.5rem'}}>
               {enviando ? 'Publicando...' : 'Publicar y Notificar a Clientes 🔔'}
             </button>
           </form>
         </div>
 
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>Ofertas en el Sistema</h2>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Descripción</th>
-                <th style={styles.th}>Tipo</th>
-                <th style={styles.th}>Precio</th>
-                <th style={styles.th}>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {misOfertas.map(of => (
-                <tr key={of.id} style={styles.tr}>
-                  <td style={styles.td}>{of.producto}</td>
-                  <td style={styles.td}>
-                    {of.tipoPromocion ? (
-                      <span style={styles.tipoBadge}>{of.tipoPromocion}</span>
-                    ) : (
-                      <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>—</span>
-                    )}
-                  </td>
-                  <td style={{ ...styles.td, color: '#10b981', fontWeight: 'bold' }}>${of.precioOferta.toFixed(2)}</td>
-                  <td style={styles.td}><span style={{ color: '#ef4444', cursor: 'pointer' }}>Cancelar</span></td>
+        <div className="card">
+          <h2 style={{fontSize: '1.25rem', marginBottom: '1.5rem'}}>Ofertas en el Sistema</h2>
+          <div style={{overflowX: 'auto'}}>
+            <table className="precios-table">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Tipo</th>
+                  <th>Precio</th>
+                  <th>Acción</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {misOfertas.map(of => (
+                  <tr key={of.id}>
+                    <td>{of.producto}</td>
+                    <td>
+                      {of.tipoPromocion ? (
+                        <span className="estatus estatus-en_revision">{of.tipoPromocion}</span>
+                      ) : (
+                        <span className="muted small">—</span>
+                      )}
+                    </td>
+                    <td style={{ color: 'var(--c-success)', fontWeight: 'bold' }}>${of.precioOferta.toFixed(2)}</td>
+                    <td><span style={{ color: 'var(--c-danger)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Cancelar</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  title: { fontSize: '1.875rem', fontWeight: 'bold', color: '#111827', marginBottom: '1.5rem' },
-  switchContainer: { display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' },
-  tab: { padding: '0.5rem 1rem', border: 'none', background: 'none', cursor: 'pointer', color: '#6b7280', fontWeight: '500' },
-  activeTab: { padding: '0.5rem 1rem', border: 'none', background: '#f3f4f6', borderRadius: '0.5rem', cursor: 'pointer', color: '#111827', fontWeight: '600' },
-  gridContainer: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' },
-  card: { background: '#fff', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' },
-  cardTitle: { fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: '600' },
-  formGroup: { marginBottom: '1rem' },
-  label: { display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: '500' },
-  input: { width: '100%', padding: '0.6rem', borderRadius: '0.3rem', border: '1px solid #d1d5db', boxSizing: 'border-box' },
-  textArea: { width: '100%', padding: '0.6rem', borderRadius: '0.3rem', border: '1px solid #d1d5db', boxSizing: 'border-box', minHeight: '60px' },
-  button: { width: '100%', padding: '0.75rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '0.3rem', fontWeight: '600', cursor: 'pointer' },
-  infoBanner: { background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.3rem', padding: '0.5rem 0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#1e40af' },
-  discountBanner: { background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.3rem', padding: '0.5rem 0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#166534' },
-  tipoBanner: { background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '0.3rem', padding: '0.5rem 0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#92400e' },
-  tipoBadge: { display: 'inline-block', padding: '0.15rem 0.5rem', background: '#dbeafe', color: '#1e40af', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { textAlign: 'left', padding: '0.5rem', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem' },
-  tr: { borderBottom: '1px solid #f3f4f6' },
-  td: { padding: '0.8rem 0.5rem', fontSize: '0.85rem' }
-};
+

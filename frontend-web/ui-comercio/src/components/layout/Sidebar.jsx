@@ -6,103 +6,42 @@ export default function Sidebar({ onLogout }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <aside style={styles.sidebar}>
-      <div style={styles.logoContainer}>
-        <h2 style={styles.logo}> ProFeCo</h2>
-        <span style={styles.badge}>Portal Comercio</span>
+    <aside className="sidebar">
+      <div className="sidebar-logo-container">
+        <h2 className="sidebar-logo"> ProFeCo</h2>
+        <span className="sidebar-badge">Portal Comercio</span>
       </div>
       
-      <nav style={styles.nav}>
-        <Link to="/" style={{...styles.link, ...(isActive('/') ? styles.activeLink : {})}}>
+      <nav className="sidebar-nav">
+        <Link to="/" className={`sidebar-link ${isActive('/') ? 'active' : ''}`}>
            Dashboard
         </Link>
-        <Link to="/registrar-precios" style={{...styles.link, ...(isActive('/registrar-precios') ? styles.activeLink : {})}}>
+        <Link to="/registrar-precios" className={`sidebar-link ${isActive('/registrar-precios') ? 'active' : ''}`}>
            Mis Precios
         </Link>
-        <Link to="/ofertas" style={{...styles.link, ...(isActive('/ofertas') ? styles.activeLink : {})}}>
+        <Link to="/ofertas" className={`sidebar-link ${isActive('/ofertas') ? 'active' : ''}`}>
          Ofertas
         </Link>
-        <Link to="/resenias" style={{...styles.link, ...(isActive('/resenias') ? styles.activeLink : {})}}>
+        <Link to="/resenias" className={`sidebar-link ${isActive('/resenias') ? 'active' : ''}`}>
          Comentarios y Calificaciones
         </Link>
-        <Link to="/reportes" style={{...styles.link, ...(isActive('/reportes') ? styles.activeLink : {})}}>
+        <Link to="/reportes" className={`sidebar-link ${isActive('/reportes') ? 'active' : ''}`}>
          Inconsistencias Reportadas
         </Link>
-        <Link to="/multas" style={{...styles.link, ...(isActive('/multas') ? styles.activeLink : {})}}>
+        <Link to="/multas" className={`sidebar-link ${isActive('/multas') ? 'active' : ''}`}>
          Multas de PROFECO
         </Link>
-        <Link to="/perfil" style={{...styles.link, ...(isActive('/perfil') ? styles.activeLink : {})}}>
+        <Link to="/perfil" className={`sidebar-link ${isActive('/perfil') ? 'active' : ''}`}>
          Mi Perfil
         </Link>
       </nav>
 
-      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid #f3f4f6' }}>
-        <button onClick={onLogout} style={styles.logoutBtn}>
+      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--c-border)' }}>
+        <button onClick={onLogout} className="sidebar-logout">
           Cerrar Sesión
         </button>
       </div>
     </aside>
   );
 }
-
-const styles = {
-  sidebar: {
-    width: '260px',
-    backgroundColor: '#ffffff',
-    borderRight: '1px solid #e5e7eb',
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'fixed', 
-    top: 0,
-    left: 0,
-  },
-  logoContainer: {
-    padding: '2rem 1.5rem',
-    borderBottom: '1px solid #f3f4f6',
-    marginBottom: '1rem',
-  },
-  logo: {
-    margin: 0,
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  badge: {
-    fontSize: '0.75rem',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: '600',
-  },
-  nav: {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '0 1rem',
-    gap: '0.5rem',
-  },
-  link: {
-    textDecoration: 'none',
-    color: '#4b5563',
-    fontWeight: '500',
-    padding: '0.75rem 1rem',
-    borderRadius: '0.5rem',
-    transition: 'background-color 0.2s',
-  },
-  activeLink: {
-    backgroundColor: '#f3f4f6',
-    color: '#111827',
-    fontWeight: '600',
-  },
-  logoutBtn: {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#fee2e2',
-    color: '#dc2626',
-    border: 'none',
-    borderRadius: '0.5rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  }
-};
+

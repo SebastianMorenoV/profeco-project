@@ -30,31 +30,96 @@ static_resources:
                         expose_headers: "grpc-status, grpc-message"
                       routes:
                         - match: { prefix: "/profeco.auth.v1.AuthService/" }
-                          route: { cluster: ms-auth }
+                          route:
+                            cluster: ms-auth
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/auth/" }
-                          route: { cluster: ms-auth }
+                          route:
+                            cluster: ms-auth
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.multas.v1.MultasService/" }
-                          route: { cluster: ms-multas }
+                          route:
+                            cluster: ms-multas
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
-                          route: { cluster: ms-comercio }
+                          route:
+                            cluster: ms-comercio
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
-                          route: { cluster: ms-catalogo }
+                          route:
+                            cluster: ms-catalogo
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.resenias.v1.ReseniasService/" }
-                          route: { cluster: ms-resenias }
+                          route:
+                            cluster: ms-resenias
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
-                          route: { cluster: ms-usuarios }
+                          route:
+                            cluster: ms-usuarios
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/reportes" }
-                          route: { cluster: ms-multas }
+                          route:
+                            cluster: ms-multas
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/multas" }
-                          route: { cluster: ms-multas }
+                          route:
+                            cluster: ms-multas
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/comercios" }
-                          route: { cluster: ms-comercio }
+                          route:
+                            cluster: ms-comercio
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/catalogo" }
-                          route: { cluster: ms-catalogo }
+                          route:
+                            cluster: ms-catalogo
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/resenias" }
-                          route: { cluster: ms-resenias }
+                          route:
+                            cluster: ms-resenias
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/usuarios" }
-                          route: { cluster: ms-usuarios }
+                          route:
+                            cluster: ms-usuarios
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                 http_filters:
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
@@ -73,7 +138,7 @@ static_resources:
                           issuer: "profeco-auth-service"
                           forward: true
                           remote_jwks:
-                            http_uri: { uri: "http://ms-auth:8098/.well-known/jwks.json", cluster: ms-auth-jwks, timeout: 5s }
+                            http_uri: { uri: "http://ms-auth:8098/.well-known/jwks.json", cluster: ms-auth-jwks, timeout: 15s }
                             cache_duration: 300s
                       rules:
                         - match: { prefix: "/api/auth/" }

@@ -14,11 +14,11 @@ export default function DashboardPage({ comercioId }) {
       try {
         // 1. Cargar catálogo global (solo para stats o cruzar datos)
         const resP = await getProductos();
-        const listaP = Array.isArray(resP.data) ? resP.data : (resP.data.productos || []);
+        const listaP = resP.data.productos || (Array.isArray(resP.data) ? resP.data : []);
 
         // 2. Cargar mis precios reales
         const resPrecios = await getPreciosPorComercio(comercioId);
-        const misPreciosList = resPrecios.data.precios || resPrecios.data || [];
+        const misPreciosList = resPrecios.data.precios || (Array.isArray(resPrecios.data) ? resPrecios.data : []);
         
         // Mapear los precios para tener el nombre del producto
         const misProductosEnVenta = misPreciosList.map(precio => {
@@ -33,7 +33,7 @@ export default function DashboardPage({ comercioId }) {
 
         // 3. Cargar ofertas reales del backend
         const resO = await getOfertas(comercioId);
-        const listaO = resO.data.ofertas || [];
+        const listaO = resO.data.ofertas || (Array.isArray(resO.data) ? resO.data : []);
 
         // Simulación: Productos en wishlist
         const wishlistAprox = Math.floor(Math.random() * 50) + 10;
@@ -55,51 +55,52 @@ export default function DashboardPage({ comercioId }) {
     cargarDashboard();
   }, []);
 
-  if (cargando) return <div style={styles.loading}>Cargando panel de control...</div>;
+  if (cargando) return <div className="loader"><div className="spinner"></div> Cargando panel de control...</div>;
 
   return (
-    <div>
-      <h1 style={styles.title}>Panel de Control</h1>
-      <p style={styles.subtitle}>Bienvenido de nuevo al portal de administración de ProFeCo.</p>
+    <div className="container">
+      <div className="section-header" style={{flexDirection: 'column', alignItems: 'flex-start'}}>
+        <h1 style={{color: 'var(--c-primary-dark)'}}>Panel de Control</h1>
+        <p className="muted">Bienvenido de nuevo al portal de administración de ProFeCo.</p>
+      </div>
 
       {/* TARJETAS DE ESTADÍSTICAS */}
-      <div style={styles.statsGrid}>
-        {/* Se quitó la estadística del Catálogo Global porque al comercio solo le interesan sus propios datos */}
-        <div style={styles.statCard}>
-          <span style={styles.statLabel}>Tus Precios</span>
-          <h2 style={styles.statValue}>{stats.misPrecios}</h2>
-          <span style={styles.statDesc}>Artículos con precio fijo</span>
+      <div className="info-grid" style={{marginBottom: '2rem'}}>
+        <div className="info-card">
+          <span className="muted small">TUS PRECIOS</span>
+          <h2 style={{fontSize: '2.25rem', color: 'var(--c-primary-dark)', margin: '0.5rem 0'}}>{stats.misPrecios}</h2>
+          <span className="muted small">Artículos con precio fijo</span>
         </div>
-        <div style={styles.statCard}>
-          <span style={{...styles.statLabel, color: '#2563eb'}}>Ofertas Activas</span>
-          <h2 style={{...styles.statValue, color: '#2563eb'}}>{stats.ofertasActivas}</h2>
-          <span style={styles.statDesc}>Promociones publicadas</span>
+        <div className="info-card">
+          <span className="small" style={{color: '#2563eb', fontWeight: 600}}>OFERTAS ACTIVAS</span>
+          <h2 style={{fontSize: '2.25rem', color: '#2563eb', margin: '0.5rem 0'}}>{stats.ofertasActivas}</h2>
+          <span className="muted small">Promociones publicadas</span>
         </div>
-        <div style={{...styles.statCard, borderLeft: '4px solid #10b981'}}>
-          <span style={{...styles.statLabel, color: '#10b981'}}>Favoritos (Wishlists)</span>
-          <h2 style={{...styles.statValue, color: '#10b981'}}>{stats.wishlists}</h2>
-          <span style={styles.statDesc}>Veces que tus productos fueron guardados</span>
+        <div className="info-card" style={{borderLeft: '4px solid var(--c-success)'}}>
+          <span className="small" style={{color: 'var(--c-success)', fontWeight: 600}}>FAVORITOS (WISHLISTS)</span>
+          <h2 style={{fontSize: '2.25rem', color: 'var(--c-success)', margin: '0.5rem 0'}}>{stats.wishlists}</h2>
+          <span className="muted small">Veces que tus productos fueron guardados</span>
         </div>
       </div>
 
       {/* LISTA DE MIS PRECIOS RECIENTES */}
-      <div style={styles.card}>
-        <div style={styles.cardHeader}>
-          <h2 style={styles.cardTitle}>Tus Precios Registrados</h2>
-          <button onClick={() => navigate('/registrar-precios')} style={styles.viewAll}>Ver y editar todos</button>
+      <div className="card">
+        <div className="section-header" style={{marginTop: 0}}>
+          <h2 style={{fontSize: '1.25rem'}}>Tus Precios Registrados</h2>
+          <button onClick={() => navigate('/registrar-precios')} className="btn-ghost">Ver y editar todos</button>
         </div>
         
-        <div style={styles.list}>
+        <div style={{display: 'flex', flexDirection: 'column'}}>
           {productos.length === 0 ? (
-             <div style={{padding: '1.5rem', color: '#6b7280'}}>No tienes productos a la venta aún.</div>
+             <div className="empty-state">No tienes productos a la venta aún.</div>
           ) : (
             productos.map((prod) => (
-              <div key={prod.id} style={styles.listItem}>
+              <div key={prod.id} style={{display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid var(--c-border)'}}>
                 <div>
-                  <div style={styles.prodName}>{prod.nombreProducto}</div>
-                  <div style={styles.prodId}>ID de Precio: {prod.id}</div>
+                  <div style={{fontWeight: '600'}}>{prod.nombreProducto}</div>
+                  <div className="muted small">ID de Precio: {prod.id}</div>
                 </div>
-                <span style={{fontWeight: 'bold', color: '#10b981'}}>
+                <span style={{fontWeight: 'bold', color: 'var(--c-success)', fontSize: '1.1rem'}}>
                   ${prod.precio?.toFixed(2)}
                 </span>
               </div>
@@ -110,28 +111,4 @@ export default function DashboardPage({ comercioId }) {
     </div>
   );
 }
-
-const styles = {
-  title: { fontSize: '1.875rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem' },
-  subtitle: { color: '#6b7280', marginBottom: '2.5rem' },
-  loading: { padding: '3rem', textAlign: 'center', color: '#6b7280' },
-  
-  // Grid de estadísticas
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' },
-  statCard: { backgroundColor: '#fff', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
-  statLabel: { fontSize: '0.875rem', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.025em' },
-  statValue: { fontSize: '2.25rem', fontWeight: 'bold', color: '#111827', margin: '0.5rem 0' },
-  statDesc: { fontSize: '0.875rem', color: '#9ca3af' },
-
-  // Tarjeta de Lista
-  card: { backgroundColor: '#fff', borderRadius: '0.75rem', border: '1px solid #e5e7eb', overflow: 'hidden' },
-  cardHeader: { padding: '1.5rem', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 },
-  viewAll: { background: 'none', border: 'none', color: '#2563eb', fontWeight: '500', cursor: 'pointer', fontSize: '0.875rem' },
-  
-  list: { display: 'flex', flexDirection: 'column' },
-  listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #f3f4f6' },
-  prodName: { fontWeight: '500', color: '#111827' },
-  prodId: { fontSize: '0.75rem', color: '#9ca3af' },
-  itemAction: { color: '#2563eb', fontSize: '0.875rem', fontWeight: '600', cursor: 'pointer' }
-};
+

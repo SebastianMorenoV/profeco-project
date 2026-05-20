@@ -17,6 +17,7 @@ import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ListaItemsComprasR
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.MensajeResponseDto
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.LoginRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.LoginResponse
+import mx.edu.itson.potros.profecoconsumidor.data.network.dto.AuthResponse
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarFcmTokenRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.RegistrarUsuarioRequest
 import mx.edu.itson.potros.profecoconsumidor.data.network.dto.ReporteResponse
@@ -136,4 +137,12 @@ interface UsuariosApi {
         @Path("id") usuarioId: Long,
         @Body body: SyncListaComprasRequest
     ): ListaItemsComprasResponseDto
+}
+
+interface AuthApi {
+    @POST("/api/auth/login")
+    suspend fun login(@Body body: LoginRequest): AuthResponse
+
+    @POST("/api/auth/registrar")
+    suspend fun registrar(@Body body: RegistrarUsuarioRequest): AuthResponse
 }

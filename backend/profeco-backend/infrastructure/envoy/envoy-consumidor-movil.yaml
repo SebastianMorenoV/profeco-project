@@ -1,7 +1,7 @@
 # ==========================================
 # CONFIGURACIÓN DE ENVOY PARA: GATEWAY CONSUMIDOR MÓVIL
 # ==========================================
-# Incluye: JWT Authentication, Rate Limiting y Transcodificación gRPC.
+# Incluye: JWT Authentication, Rate Limiting y Transcodificación gRPC para todos los microservicios.
 
 static_resources:
   listeners:
@@ -29,17 +29,68 @@ static_resources:
                         expose_headers: "grpc-status, grpc-message"
                       routes:
                         - match: { prefix: "/profeco.auth.v1.AuthService/" }
-                          route: { cluster: ms-auth }
+                          route:
+                            cluster: ms-auth
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/api/auth/" }
-                          route: { cluster: ms-auth }
+                          route:
+                            cluster: ms-auth
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.catalogo.v1.CatalogoService/" }
-                          route: { cluster: ms-catalogo }
+                          route:
+                            cluster: ms-catalogo
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
+                        - match: { prefix: "/profeco.comercio.v1.ComercioService/" }
+                          route:
+                            cluster: ms-comercio
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.resenias.v1.ReseniasService/" }
-                          route: { cluster: ms-resenias }
+                          route:
+                            cluster: ms-resenias
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
+                        - match: { prefix: "/profeco.ofertas.v1.OfertasService/" }
+                          route:
+                            cluster: ms-ofertas
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/profeco.usuarios.v1.UsuariosService/" }
-                          route: { cluster: ms-usuarios }
+                          route:
+                            cluster: ms-usuarios
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
+                        - match: { prefix: "/profeco.multas.v1.MultasService/" }
+                          route:
+                            cluster: ms-multas
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                         - match: { prefix: "/" }
-                          route: { cluster: ms-catalogo }
+                          route:
+                            cluster: ms-catalogo
+                            timeout: 15s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
                 http_filters:
                   - name: envoy.filters.http.cors
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
@@ -58,7 +109,7 @@ static_resources:
                           issuer: "profeco-auth-service"
                           forward: true
                           remote_jwks:
-                            http_uri: { uri: "http://ms-auth:8098/.well-known/jwks.json", cluster: ms-auth-jwks, timeout: 5s }
+                            http_uri: { uri: "http://ms-auth:8098/.well-known/jwks.json", cluster: ms-auth-jwks, timeout: 15s }
                             cache_duration: 300s
                       rules:
                         - match: { prefix: "/api/auth/" }
@@ -68,8 +119,15 @@ static_resources:
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                      proto_descriptor: "/etc/envoy/proto/gateway-movil.pb"
-                      services: ["profeco.catalogo.v1.CatalogoService","profeco.resenias.v1.ReseniasService","profeco.usuarios.v1.UsuariosService","profeco.auth.v1.AuthService"]
+                      proto_descriptor: "/etc/envoy/proto/gateway-consumidor.pb"
+                      services:
+                        - "profeco.catalogo.v1.CatalogoService"
+                        - "profeco.comercio.v1.ComercioService"
+                        - "profeco.resenias.v1.ReseniasService"
+                        - "profeco.ofertas.v1.OfertasService"
+                        - "profeco.multas.v1.MultasService"
+                        - "profeco.usuarios.v1.UsuariosService"
+                        - "profeco.auth.v1.AuthService"
                   - name: envoy.filters.http.router
                     typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
   clusters:
@@ -79,18 +137,36 @@ static_resources:
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-catalogo, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-catalogo, port_value: 9091 } } } }] }] }
+    - name: ms-comercio
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-comercio, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-comercio, port_value: 9092 } } } }] }] }
     - name: ms-resenias
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-resenias, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-resenias, port_value: 9094 } } } }] }] }
+    - name: ms-ofertas
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-ofertas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-ofertas, port_value: 9095 } } } }] }] }
     - name: ms-usuarios
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST
       dns_lookup_family: V4_ONLY
       typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
       load_assignment: { cluster_name: ms-usuarios, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-usuarios, port_value: 9096 } } } }] }] }
+    - name: ms-multas
+      type: STRICT_DNS
+      lb_policy: LEAST_REQUEST
+      dns_lookup_family: V4_ONLY
+      typed_extension_protocol_options: { envoy.extensions.upstreams.http.v3.HttpProtocolOptions: { "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions, explicit_http_config: { http2_protocol_options: {} } } }
+      load_assignment: { cluster_name: ms-multas, endpoints: [{ lb_endpoints: [{ endpoint: { address: { socket_address: { address: ms-multas, port_value: 9097 } } } }] }] }
     - name: ms-auth
       type: STRICT_DNS
       lb_policy: LEAST_REQUEST

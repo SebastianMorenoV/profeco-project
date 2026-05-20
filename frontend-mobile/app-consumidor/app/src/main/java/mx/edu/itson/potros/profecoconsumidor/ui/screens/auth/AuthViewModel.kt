@@ -49,7 +49,7 @@ class AuthViewModel : ViewModel() {
                         .filter { it.isNotBlank() }
                         .joinToString(" ")
                         .ifBlank { r.cuenta.email }
-                    ServiceLocator.prefs.iniciarSesion(r.cuenta.usuarioId, nombreCompleto)
+                    ServiceLocator.prefs.iniciarSesion(r.cuenta.usuarioId, nombreCompleto, r.cuenta.token)
                     ServiceLocator.syncDownFromRemote(r.cuenta.usuarioId)
                     _ui.value = AuthUiState(okMensaje = "Bienvenido, $nombreCompleto.")
                     onExito()
@@ -77,7 +77,7 @@ class AuthViewModel : ViewModel() {
                         .filter { it.isNotBlank() }
                         .joinToString(" ")
                         .ifBlank { r.cuenta.email }
-                    ServiceLocator.prefs.iniciarSesion(r.cuenta.usuarioId, nombreCompleto)
+                    ServiceLocator.prefs.iniciarSesion(r.cuenta.usuarioId, nombreCompleto, r.cuenta.token)
                     ServiceLocator.syncDownFromRemote(r.cuenta.usuarioId)
                     _ui.value = AuthUiState(okMensaje = "Cuenta creada. Bienvenido, $nombreCompleto.")
                     onExito()

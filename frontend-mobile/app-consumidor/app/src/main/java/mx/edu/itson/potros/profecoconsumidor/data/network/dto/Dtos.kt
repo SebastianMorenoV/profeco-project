@@ -162,6 +162,14 @@ data class LoginResponse(
 )
 
 @Serializable
+data class AuthResponse(
+    val exito: Boolean = false,
+    val mensaje: String = "",
+    val token: String = "",
+    val usuario: UsuarioDto? = null
+)
+
+@Serializable
 data class CambiarPasswordRequest(
     val id: Long,
     val password_actual: String,
